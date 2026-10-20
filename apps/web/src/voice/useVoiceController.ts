@@ -238,7 +238,7 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
       }
 
       if (!res) {
-        res = generateApproveClientAnswer(text, targetProjectId);
+        res = await generateApproveClientAnswer(text, targetProjectId, historyRef.current.slice(-6));
       }
 
       const reply = res.reply || res.spokenText || "I'm Approve, your voice copilot. I can help navigate your compliance roadmap, inspect required documents, or check government schemes and subsidies.";

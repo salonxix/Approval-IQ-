@@ -778,66 +778,206 @@ export function getDemoAiSchemeAnalysis(projectId: string = DEMO_PROJECT_ID): Ai
 
 export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatResponse {
   const q = query.toLowerCase();
-  
-  if (/cgtmse|collateral|loan|credit|bank|financing/.test(q)) {
+
+  // 1. CGTMSE Collateral-Free Credit Guarantee
+  if (/cgtmse|collateral|credit guarantee|loan|bank loan|debt|sidbi|term loan|financing/.test(q)) {
     return {
       query,
-      answer: "Under the Credit Guarantee Scheme for Micro & Small Enterprises (CGTMSE), your Pune Craft Brewery unit qualifies for up to **₹5.00 Crore** in collateral-free credit facilities. The trust provides an 85% sovereign guarantee cover for MSME manufacturing units, allowing you to secure term loans and working capital without pledging personal immovable property.",
+      answer: "Under the **Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)**, your Pune Craft Brewery unit qualifies for up to **₹5.00 Crore** in collateral-free credit facilities. The trust provides an **85% sovereign guarantee cover** for MSME manufacturing units, allowing you to secure term loans for brewhouse equipment and working capital limits without pledging personal residential property or third-party collateral.",
       relevantSchemes: ['MSME-CGTMSE-001', 'MSME-UDYAM-001'],
       actionableSteps: [
-        'Obtain Udyam MSME Registration Certificate',
-        'Prepare Detailed Project Report (DPR) with 7-year DSCR financial projections',
-        'Submit loan application through any scheduled commercial bank under CGTMSE cover',
+        'Obtain Udyam MSME Registration Certificate for Small Enterprise classification',
+        'Prepare Detailed Project Report (DPR) with 7-year DSCR financial projections (target DSCR >= 1.5)',
+        'Submit loan application through nationalized partner banks (SBI, Bank of Baroda, HDFC, or SIDBI) under CGTMSE cover',
       ],
-      confidenceScore: 0.96,
-      sourceAttribution: 'Ministry of MSME & SIDBI CGTMSE Guidelines 2026',
+      confidenceScore: 0.98,
+      sourceAttribution: 'Ministry of MSME & SIDBI CGTMSE Operational Guidelines 2026',
       timestamp: new Date().toISOString(),
     };
   }
 
-  if (/epcg|customs|import|duty|machinery|kettle|fermenter/.test(q)) {
+  // 2. EPCG 0% Customs Duty Machinery Import
+  if (/epcg|customs|import|duty|machinery|kettle|fermenter|brewhouse|bottling line/.test(q)) {
     return {
       query,
-      answer: "The **EPCG (Export Promotion Capital Goods)** scheme allows you to import high-efficiency brewing kettles, bottling lines, and refrigeration plant at **0% customs duty** (normally 27.5% combined tariff). In return, you commit to an export obligation equivalent to 6 times the duty saved over a 6-year block.",
+      answer: "The **EPCG (Export Promotion Capital Goods)** scheme allows you to import high-efficiency brewing kettles, conical fermenters, bright beer tanks (BBTs), and automated bottling lines at **0% basic customs duty** (normally 27.5% combined tariff). In return, you commit to an export obligation equivalent to **6 times the customs duty saved** over a block of 6 years (or 75% deemed export if supplying duty-free international export channels).",
       relevantSchemes: ['DGFT-EPCG-001'],
       actionableSteps: [
         'Obtain Importer-Exporter Code (IEC) from DGFT portal',
-        'Get Chartered Engineer certificate certifying import machinery specs',
+        'Acquire Chartered Engineer Certificate certifying technical specifications of imported brewing plant',
         'Submit online EPCG authorization application prior to equipment bill of lading',
       ],
-      confidenceScore: 0.94,
+      confidenceScore: 0.96,
       sourceAttribution: 'Directorate General of Foreign Trade (DGFT) Foreign Trade Policy',
       timestamp: new Date().toISOString(),
     };
   }
 
-  if (/psi|maharashtra|negative list|annexure ii|subsidy|sgst/.test(q)) {
+  // 3. Maharashtra PSI 2019 & Negative List Policy Analysis
+  if (/psi|maharashtra|negative list|annexure ii|subsidy|sgst|state grant|capital subsidy/.test(q)) {
     return {
       query,
-      answer: "Under the **Maharashtra Package Scheme of Incentives (PSI 2019)**, potable alcohol, beer brewing, and distillery manufacturing units are categorized under the **Annexure II Negative List** (Item 4). This means your unit is not eligible for state SGST cash reimbursement or direct capital grants. However, you can still claim central CGTMSE credit guarantees, EPCG duty waivers, and Section 80-IAC corporate tax deductions.",
-      relevantSchemes: ['MAHA-PSI-2019', 'MSME-CGTMSE-001', 'DGFT-EPCG-001'],
+      answer: "Under the **Maharashtra Package Scheme of Incentives (PSI 2019)**, potable alcohol, beer brewing, and distillery manufacturing units are categorized under the **Annexure II Negative List** (Item 4). Consequently, your unit is **excluded from direct state SGST cash reimbursement and capital cash grants**. However, your enterprise remains **100% eligible** for Central CGTMSE ₹5.00 Cr credit guarantees, EPCG 0% customs duty waivers, Section 80-IAC 3-year tax holidays, and state electricity duty exemptions.",
+      relevantSchemes: ['MAHA-PSI-2019', 'MSME-CGTMSE-001', 'DGFT-EPCG-001', 'STARTUP-80IAC-001'],
       actionableSteps: [
-        'Focus on Central MSME schemes rather than state cash subsidies',
-        'Register under MSME Udyam for local electricity duty exemptions',
+        'Structure fiscal planning around Central MSME credit guarantees rather than state cash grants',
+        'Register under MSME Udyam to claim statutory electricity duty waivers',
         'Leverage Section 80-IAC for a 3-year complete corporate income tax holiday',
       ],
-      confidenceScore: 0.98,
-      sourceAttribution: 'Government of Maharashtra Industries Department GR PSI-2019/CR-46',
+      confidenceScore: 0.99,
+      sourceAttribution: 'Government of Maharashtra Industries Department GR PSI-2019/CR-46 (Annexure II)',
       timestamp: new Date().toISOString(),
     };
   }
 
+  // 4. Section 80-IAC 3-Year Corporate Tax Holiday
+  if (/80-iac|80iac|tax holiday|income tax|corporate tax|tax exemption|dpiit|startup/.test(q)) {
+    return {
+      query,
+      answer: "Under **Section 80-IAC of the Income Tax Act**, eligible DPIIT-recognized startups can claim a **100% deduction of profits and gains for 3 consecutive financial years** out of the first 10 years of incorporation. For Pune Craft Brewery, this allows you to shelter retained earnings from corporate income tax and reinvest operating cash flows directly into plant expansion and working capital.",
+      relevantSchemes: ['STARTUP-80IAC-001'],
+      actionableSteps: [
+        'Ensure incorporation as a Private Limited Company or LLP within the last 10 years',
+        'Obtain DPIIT Startup India Recognition Certificate via Startup India portal',
+        'Submit Form-1 application to the Inter-Ministerial Board (IMB) for tax exemption certificate',
+      ],
+      confidenceScore: 0.95,
+      sourceAttribution: 'Central Board of Direct Taxes (CBDT) & DPIIT Startup India Guidelines',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 5. MSME ZED (Zero Defect Zero Effect) Green Manufacturing Subsidy
+  if (/zed|zero defect|green subsidy|iso|clean energy|environmental subsidy|audit subsidy/.test(q)) {
+    return {
+      query,
+      answer: "The **MSME ZED (Zero Defect Zero Effect)** certification scheme provides up to an **80% financial subsidy** on environmental audits, water conservation assessments, cleaner technology adoption, and quality certification costs. Achieving ZED Silver or Gold certification also unlocks an **additional 0.5% interest rate discount** on bank credit facilities.",
+      relevantSchemes: ['MSME-ZED-001', 'MSME-CGTMSE-001'],
+      actionableSteps: [
+        'Enrol on the MSME ZED portal using your Udyam registration number',
+        'Conduct the initial online self-assessment for environmental and quality benchmarks',
+        'Schedule accredited desktop and physical site verification during ETP commissioning',
+      ],
+      confidenceScore: 0.94,
+      sourceAttribution: 'Ministry of MSME ZED Sustainable Certification Guidelines',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 6. Electricity Duty Exemption
+  if (/electricity|power tariff|duty exemption|msedcl subsidy|power rebate|energy/.test(q)) {
+    return {
+      query,
+      answer: "Under the **Maharashtra Electricity Duty Act**, manufacturing MSMEs holding an active Udyam registration are eligible for a **100% exemption from state electricity duty for a period of 5 years** from the date of commercial production. In MIDC Chakan (Group C taluka), this duty waiver saves approximately **₹1.20 to ₹1.80 per kWh**, substantially reducing monthly power utility operating expenditure.",
+      relevantSchemes: ['MSME-UDYAM-001', 'MAHA-ELEC-2026'],
+      actionableSteps: [
+        'Secure permanent HT 150 kVA power connection meter installation from MSEDCL',
+        'Submit application for Electricity Duty Exemption to the Electrical Inspectorate, Pune Division',
+        'Furnish certified copy of Udyam Certificate and factory commercial production commencement certificate',
+      ],
+      confidenceScore: 0.95,
+      sourceAttribution: 'Maharashtra Energy Department GR on Industrial Electricity Duty Concessions',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 7. Stamp Duty Concessions on MIDC Lease
+  if (/stamp duty|lease deed stamp|registration concession|midc stamp/.test(q)) {
+    return {
+      query,
+      answer: "Industrial lease deeds executed for plots or built-up sheds inside **MIDC Industrial Parks** qualify for **concessional stamp duty of 0.5%** under the Maharashtra Stamp Act (compared to standard 5% commercial lease rates). For your 6,000 sq.ft shed lease in MIDC Chakan Phase II, this limits stamp duty to statutory minimum slabs.",
+      relevantSchemes: ['MAHA-STAMP-CONCESSION'],
+      actionableSteps: [
+        'Obtain formal MIDC sub-lease sanction order from MIDC Regional Officer Pune',
+        'Draft registered lease deed citing Maharashtra Industrial Policy Stamp Concession clauses',
+        'Pay duty via Government Receipt Accounting System (GRAS) at Sub-Registrar Khed/Chakan',
+      ],
+      confidenceScore: 0.93,
+      sourceAttribution: 'Inspector General of Registration & Stamps, Maharashtra State',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 8. GST, Input Tax Credit & Excise Interplay
+  if (/gst|vat|mvat|tax structure|indirect tax|input tax credit|itc|inverted duty/.test(q)) {
+    return {
+      query,
+      answer: "Under **Article 366(12A) of the Constitution of India**, alcoholic liquor for human consumption is constitutionally excluded from GST and is governed by **Maharashtra State Excise Duty + Maharashtra VAT (MVAT)**. Raw materials (malt, hops), packaging (glass bottles, cans), and brewery plant machinery incur **18% to 28% GST**. Because finished beer is outside GST, **Input Tax Credit (ITC) cannot be adjusted against State Excise or VAT**, making input GST a direct component of production cost.",
+      relevantSchemes: ['DGFT-EPCG-001'],
+      actionableSteps: [
+        'Utilize EPCG scheme to eliminate the 27.5% customs duty/IGST component on imported brewhouse plant',
+        'Maintain segregated accounting books for GST-paid capital inputs and State Excise revenue passes',
+        'File regular GSTR-1 and GSTR-3B for outward supply of non-potable by-products (spent grain cattle feed)',
+      ],
+      confidenceScore: 0.97,
+      sourceAttribution: 'GST Council Constitutional Provisions & Maharashtra State Excise Department',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 9. Udyam MSMED Act 45-Day Payment Protection
+  if (/udyam|samadhaan|delayed payment|buyer protection|section 15|45 days|payment delay/.test(q)) {
+    return {
+      query,
+      answer: "Under **Section 15 & 16 of the MSMED Act, 2006**, all institutional buyers (hotel chains, licensed distributors, retailers) are legally mandated to make payment to registered MSME suppliers within **45 days**. If payment is delayed beyond 45 days, the buyer is statutorily liable to pay **compound interest with monthly rests at 3 times the RBI Bank Rate**.",
+      relevantSchemes: ['MSME-UDYAM-001', 'MSME-SAMADHAAN-001'],
+      actionableSteps: [
+        'Print your Udyam Registration number on every commercial invoice and delivery challan',
+        'State payment due date strictly within 45 days on all wholesale dispatch notes',
+        'File delayed payment recovery claims on the MSME Samadhaan portal for summary resolution in Pune',
+      ],
+      confidenceScore: 0.96,
+      sourceAttribution: 'Ministry of Micro, Small and Medium Enterprises (MSMED Act 2006)',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 10. Solar Rooftop & Renewable Energy Subsidies (MEDA)
+  if (/solar|meda|rooftop solar|renewable|clean energy|power cost/.test(q)) {
+    return {
+      query,
+      answer: "Through the **Maharashtra Energy Development Agency (MEDA)** and MSEDCL Industrial Solar Net Metering regulations, your 6,000 sq.ft industrial shed in Chakan Phase II can accommodate up to a **50 kW to 80 kW grid-tied rooftop solar array**. This reduces your daytime brewhouse refrigeration and power bill by up to 40%, with excess generation banked into the MSEDCL grid under gross/net metering tariffs.",
+      relevantSchemes: ['MEDA-SOLAR-2026', 'MSME-ZED-001'],
+      actionableSteps: [
+        'Conduct roof structural load stability assessment with an empanelled chartered engineer',
+        'Submit grid-connectivity feasibility application on the MSEDCL solar rooftop portal',
+        'Leverage accelerated depreciation (40%) under Section 32 of Income Tax Act for solar plant assets',
+      ],
+      confidenceScore: 0.92,
+      sourceAttribution: 'Maharashtra Energy Development Agency (MEDA) Rooftop Guidelines',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 11. Working Capital Lines & Priority Sector MSME Banking
+  if (/working capital|cash credit|cc limit|overdraft|priority sector|bank financing/.test(q)) {
+    return {
+      query,
+      answer: "As an Udyam-registered Small Enterprise, Pune Craft Brewery qualifies for **Priority Sector Lending (PSL)** bank facilities from public and private scheduled banks at concessional rates (8.5% to 9.5% p.a.). Lenders calculate **Cash Credit (CC) limits based on 20% to 25% of projected annual turnover** (Nayak Committee formula), hypothecated against raw malt stock, packaging material, and trade receivables.",
+      relevantSchemes: ['MSME-CGTMSE-001', 'MSME-UDYAM-001'],
+      actionableSteps: [
+        'Prepare 12-month month-wise working capital requirement statement and inventory holding cycle',
+        'Approach partner banks (State Bank of India MSME Chakan branch, Bank of Baroda, or SIDBI Pune)',
+        'Link working capital loan sanction to CGTMSE guarantee cover to avoid personal real estate pledge',
+      ],
+      confidenceScore: 0.95,
+      sourceAttribution: 'Reserve Bank of India (RBI) Priority Sector Lending Master Circular',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  // 12. Dynamic Fiscal & Scheme Synthesizer (for any other inquiry)
   return {
     query,
-    answer: "Your Pune Craft Brewery enterprise is eligible for key central fiscal programs: **₹5.00 Crore CGTMSE** collateral-free financing, **0% customs duty** on brewery machinery imports under EPCG, and **80% subsidies** for MSME ZED green manufacturing certifications. While direct state SGST cash reimbursement is restricted under Maharashtra PSI-2019 Annexure II, your central fiscal incentives remain 100% accessible.",
-    relevantSchemes: ['MSME-CGTMSE-001', 'DGFT-EPCG-001', 'MSME-ZED-001', 'STARTUP-80IAC-001'],
+    answer: `For **Pune Craft Brewery** (₹4.00 Cr CapEx in MIDC Chakan Phase II, Maharashtra), your statutory financial optimization strategy focuses on central credit and customs programs: **₹5.00 Crore CGTMSE** collateral-free financing (85% sovereign guarantee), **0% EPCG customs duty** on brewery plant imports, **Section 80-IAC** 3-year corporate income tax holidays, and **5-year electricity duty exemptions** under Udyam. While direct state SGST cash grants are restricted under Maharashtra PSI-2019 Annexure II, these combined central programs save over **₹75 Lakhs in capital and tax outlays**.`,
+    relevantSchemes: ['MSME-CGTMSE-001', 'DGFT-EPCG-001', 'STARTUP-80IAC-001', 'MSME-ZED-001', 'MSME-UDYAM-001'],
     actionableSteps: [
-      'File Udyam Registration to unlock priority sector lending discounts',
-      'Apply for EPCG license before importing high-tech fermenters',
-      'Submit CGTMSE loan dossier to partner lenders',
+      'Maintain active Udyam Small Enterprise certification for bank credit and utility concessions',
+      'Apply for EPCG 0% duty authorization prior to foreign equipment shipments',
+      'Submit CGTMSE collateral-free loan dossier with audited 7-year DSCR financial model',
     ],
-    confidenceScore: 0.92,
-    sourceAttribution: 'ApprovalIQ Statutory Regulatory Knowledge Base',
+    confidenceScore: 0.94,
+    sourceAttribution: 'ApprovalIQ Statutory Regulatory Knowledge Base & MSME Policy Framework',
     timestamp: new Date().toISOString(),
   };
 }
@@ -1029,7 +1169,146 @@ export function getDemoClarifications(_projectId: string = DEMO_PROJECT_ID): Cla
 /**
  * Intelligent client-side statutory answer generator for Approve Voice Assistant
  */
-export function generateApproveClientAnswer(
+/**
+ * Intelligent client-side statutory answer generator for Approve Voice Assistant
+ */
+
+/**
+ * Attempt a live LLM call if the user or environment has configured an AI API key.
+ */
+async function tryLiveLlmAnswer(
+  query: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+): Promise<AssistantChatResponse | null> {
+  if (typeof window === 'undefined') return null;
+  const apiKey =
+    localStorage.getItem('approvaliq_ai_api_key') ||
+    localStorage.getItem('openrouter_api_key') ||
+    localStorage.getItem('openai_api_key') ||
+    (typeof import.meta !== 'undefined' && (import.meta as Record<string, any>).env?.VITE_AI_API_KEY) ||
+    '';
+
+  if (!apiKey) return null;
+
+  const systemPrompt = `You are "Approve", the dedicated intelligent Voice Assistant and Statutory Compliance Copilot for ApprovalIQ (India's industrial single-window clearance intelligence platform).
+The active facility is "Pune Craft Brewery":
+- Location: 6,000 sq.ft. leased industrial shed in MIDC Chakan Phase II, Taluka Khed, District Pune, Maharashtra.
+- Capital Outlay: ₹4.00 Crore, 25 full-time personnel.
+- Industry: Craft Beer Brewing, Fermentation & Bottling (Orange Category under MPCB).
+- Statutory Clearances: 10 Total. 3 Ready to file (DISH Factory Building Plan, MPCB Consent to Establish, Provisional Fire NOC), 1 In Review (State Excise BRL-001), 3 Blocked by prerequisites (MPCB CTO, Final Fire NOC, DISH Factory Licence).
+- Key Regulations: Maharashtra Right to Services (RTS) Act 2015 (strict SLAs, deemed approval clauses), Factories Act 1948, Food Safety and Standards (Alcoholic Beverages) Regulations 2018, Legal Metrology (Packaged Commodities) Rules 2011 Rule 27.
+- Fiscal Schemes: Eligible for ₹5.00 Cr CGTMSE collateral-free guarantee, 0% customs duty on equipment under EPCG, Section 80-IAC 3-year tax holiday, MSME ZED 80% subsidy. Excluded from direct state cash subsidies under Maharashtra PSI 2019 Annexure II negative list (Item 4).
+
+Respond directly, accurately, and authoritatively to the user's question with specific statutory rules, authority names, technical standards, or legal procedures. Keep the tone professional, encouraging, and clear.
+Return a valid JSON object in this format:
+{
+  "reply": "Markdown detailed answer with bullet points and bold highlights",
+  "spokenText": "Plain English spoken version (2-4 clear sentences) to be read aloud via text-to-speech",
+  "actions": [ { "type": "navigate", "target": "roadmap" | "schemes" | "vault" | "profile" | "time-cost" | "inspections" | "grievances", "label": "Button Label" } ]
+}`;
+
+  try {
+    const isOpenRouter = apiKey.startsWith('sk-or-') || apiKey.length > 50;
+    const endpoint = isOpenRouter
+      ? 'https://openrouter.ai/api/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history.slice(-4).map((h) => ({ role: h.role, content: h.content.slice(0, 1000) })),
+      { role: 'user', content: query },
+    ];
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 7000);
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: isOpenRouter ? 'google/gemini-2.0-flash-001' : 'gpt-4o-mini',
+        messages,
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (content) {
+        const parsed = JSON.parse(content);
+        return {
+          reply: parsed.reply || parsed.answer || content,
+          spokenText: parsed.spokenText || parsed.spoken || parsed.reply || content,
+          mode: 'llm',
+          actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+        };
+      }
+    }
+  } catch {
+    // Graceful fallback to deterministic statutory synthesis
+  }
+  return null;
+}
+
+/**
+ * Dynamic Contextual Reasoning Synthesizer for questions outside the primary keyword patterns.
+ * Never returns a canned greeting menu. Parses the user's intent and delivers an authoritative,
+ * project-grounded statutory reply.
+ */
+function synthesizeDynamicReasoning(message: string, _projectId: string): AssistantChatResponse {
+  const cleanQ = message.trim();
+  const lower = cleanQ.toLowerCase();
+
+  // Extract core domain concepts
+  const tokens = lower
+    .replace(/[?.,!/\\;:'"()[\]{}]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !/^(the|and|for|what|how|why|can|will|should|with|about|tell|give|please|there|this|that|your|from|into|onto|have|does|when|where|which|who)$/.test(w));
+
+  const subjectPhrase = tokens.slice(0, 4).join(' ') || 'regulatory operations';
+
+  return {
+    reply: [
+      `### ⚖️ Statutory & Compliance Assessment: ${cleanQ}`,
+      '',
+      `For your **Pune Craft Brewery** facility (6,000 sq.ft. leased shed in **MIDC Chakan Phase II, Pune**, ₹4.00 Cr CapEx, 25 employees, Orange Category Fermentation):`,
+      '',
+      `1. **Statutory Stance & Feasibility**:`,
+      `   - Commercial craft brewing and bottling in Maharashtra operates under a dual jurisdiction: **Maharashtra State Excise** (manufacturing integrity & revenue passes) and the **Directorate of Industrial Safety & Health (DISH)** / **MPCB** (occupational safety & pollution limits).`,
+      `   - Any operational or facility modification relating to **"${subjectPhrase}"** must conform strictly to your approved site layout drawings and the conditions of **Form BRL-001** (State Excise) and **Consent to Establish (CTE)**.`,
+      '',
+      `2. **Regulatory Authority & Filing Protocols**:`,
+      `   - **Competent Authorities**: Maharashtra Pollution Control Board (SRO Pune-II), MIDC Special Planning Authority (SPA), and Commissioner of State Excise, Maharashtra.`,
+      `   - Under the **Maharashtra Right to Services (RTS) Act 2015**, statutory changes or endorsements carry binding SLA timelines (15 to 45 working days) with statutory deemed-approval safeguards.`,
+      '',
+      `3. **Immediate Recommended Action Steps**:`,
+      `   - 📋 Ensure all technical specifications, equipment ratings, and floor layouts are uploaded to your **Document Vault**.`,
+      `   - 🔄 File statutory filings through the **MAITRI Single Window portal** to trigger synchronized statutory time clocks.`,
+      `   - 💼 Verify with your chartered engineer that all installations preserve your **₹5.00 Cr CGTMSE** loan covenants and zero-liquid-discharge (ZLD) effluent parameters.`,
+    ].join('\n'),
+    spokenText: `Regarding ${subjectPhrase} for your Pune Craft Brewery in MIDC Chakan, this falls under State Excise, DISH, and MPCB compliance. All technical specifications must align with your approved layout drawings and MAITRI single window filings, protected by Maharashtra Right to Services Act SLAs.`,
+    mode: 'offline',
+    actions: [
+      { type: 'navigate', target: 'roadmap', label: 'View Roadmap' },
+      { type: 'navigate', target: 'vault', label: 'Check Vault' },
+      { type: 'navigate', target: 'schemes', label: 'Explore Schemes' },
+    ],
+  };
+}
+
+/**
+ * Comprehensive Statutory Knowledge Engine for Approve Voice Assistant.
+ * Covers 35+ domain areas with deep legal citations, official authority names,
+ * quantitative thresholds, and immediate actionable steps.
+ */
+function synthesizeStatutoryAnswer(
   message: string,
   _projectId: string = DEMO_PROJECT_ID,
 ): AssistantChatResponse {
@@ -1037,7 +1316,7 @@ export function generateApproveClientAnswer(
 
   // 1. Navigation Commands
   if (/take me to|open|go to|show me|navigate to/.test(q)) {
-    if (/scheme|incentive|subsidy|subsidies/.test(q)) {
+    if (/scheme|incentive|subsidy|subsidies|grant|funding/.test(q)) {
       return {
         reply: 'Opening Schemes and Incentives desk now.',
         spokenText: 'Opening Schemes and Incentives desk now.',
@@ -1045,7 +1324,7 @@ export function generateApproveClientAnswer(
         actions: [{ type: 'navigate', target: 'schemes', label: 'Open Schemes & Incentives' }],
       };
     }
-    if (/roadmap|approval|clearance/.test(q)) {
+    if (/roadmap|approval|clearance|license|licence|dag/.test(q)) {
       return {
         reply: 'Opening Approval Roadmap desk now.',
         spokenText: 'Opening Approval Roadmap desk now.',
@@ -1053,7 +1332,7 @@ export function generateApproveClientAnswer(
         actions: [{ type: 'navigate', target: 'roadmap', label: 'Open Approval Roadmap' }],
       };
     }
-    if (/vault|document/.test(q)) {
+    if (/vault|document|paperwork|file|upload/.test(q)) {
       return {
         reply: 'Opening Document Vault now.',
         spokenText: 'Opening Document Vault now.',
@@ -1061,7 +1340,7 @@ export function generateApproveClientAnswer(
         actions: [{ type: 'navigate', target: 'vault', label: 'Open Document Vault' }],
       };
     }
-    if (/profile/.test(q)) {
+    if (/profile|business profile|parameters|intake/.test(q)) {
       return {
         reply: 'Opening Business Profile intake now.',
         spokenText: 'Opening Business Profile intake now.',
@@ -1069,7 +1348,7 @@ export function generateApproveClientAnswer(
         actions: [{ type: 'navigate', target: 'profile', label: 'Open Business Profile' }],
       };
     }
-    if (/time|cost|forecast|prediction/.test(q)) {
+    if (/time|cost|forecast|prediction|budget|estimate/.test(q)) {
       return {
         reply: 'Opening Time and Cost Prediction desk now.',
         spokenText: 'Opening Time and Cost Prediction desk now.',
@@ -1077,7 +1356,7 @@ export function generateApproveClientAnswer(
         actions: [{ type: 'navigate', target: 'time-cost', label: 'Open Time & Cost Forecast' }],
       };
     }
-    if (/inspection/.test(q)) {
+    if (/inspection|site visit|auditor/.test(q)) {
       return {
         reply: 'Opening Joint Inspections desk now.',
         spokenText: 'Opening Joint Inspections desk now.',
@@ -1085,22 +1364,31 @@ export function generateApproveClientAnswer(
         actions: [{ type: 'navigate', target: 'inspections', label: 'Open Inspections Desk' }],
       };
     }
+    if (/grievance|appeal|dispute|delay|escalat/.test(q)) {
+      return {
+        reply: 'Opening Grievance and RTS Appeals desk now.',
+        spokenText: 'Opening Grievance and RTS Appeals desk now.',
+        mode: 'offline',
+        actions: [{ type: 'navigate', target: 'roadmap', label: 'Open Grievance Desk' }],
+      };
+    }
   }
 
-  // 2. Project Overview / "What is my project?" / "Explain project"
+  // 2. Project Overview & Scope
   if (/\b(what.*is.*(the|a|my|this)?\s*project|about.*(the|a|my|this)?\s*project|project.*summary|tell me about|explain.*project|what are we building|project overview|my project|describe.*project)\b/i.test(q)) {
     return {
       reply: [
-        '### 🏭 Pune Craft Brewery (MIDC Chakan, Pune, Maharashtra)',
+        '### 🏭 Pune Craft Brewery (MIDC Chakan Phase II, Pune, Maharashtra)',
         '',
-        '- **Facility Scope**: 6,000 sq.ft. leased industrial shed in MIDC Chakan Phase II, Pune.',
-        '- **Project Outlay & Team**: ₹4.00 Crore capital investment, 25 full-time personnel.',
+        '- **Facility Scope**: 6,000 sq.ft. leased industrial shed in MIDC Chakan Phase II, Taluka Khed, District Pune.',
+        '- **Project Outlay & Team**: ₹4.00 Crore capital investment, 25 full-time personnel (18 plant operations, 7 administration).',
+        '- **Industrial Classification**: Orange Category Fermentation & Potable Beer Manufacturing under MPCB norms.',
         '- **Statutory Clearances (10 Total)**:',
-        '  - 🟢 **Ready for Immediate Submission (3)**: DISH Factory Building Plan Approval, MPCB Consent to Establish (CTE), and Provisional Fire NOC.',
-        '  - 🟡 **In Review (1)**: State Excise Brewery & Bottling Licence (BRL-001).',
+        '  - 🟢 **Ready for Immediate Submission (3)**: DISH Factory Building Plan Approval (Rule 3), MPCB Consent to Establish (CTE), and Provisional Fire NOC.',
+        '  - 🟡 **In Review (1)**: State Excise Brewery & Bottling Licence (Form BRL-001, App ID: EX-BRL-2026-088).',
         '  - 🔴 **Blocked by Prerequisites (3)**: MPCB Consent to Operate (CTO), Final Fire NOC, and DISH Factory Licence.',
-        '- **Projected Timelines**: 45 to 65 working days governed by the Maharashtra Right to Services (RTS) Act SLAs.',
-        '- **Estimated Statutory Outlay**: ₹1,85,000 to ₹2,40,000 in official government fees.',
+        '- **Statutory Timelines**: 45 to 65 working days governed by Maharashtra Right to Services (RTS) Act SLAs.',
+        '- **Government Fee Outlay**: ₹1,85,000 to ₹2,40,000 in official statutory fees.',
       ].join('\n'),
       spokenText: 'Your project Pune Craft Brewery is a 6,000 square foot craft brewery and bottling facility in MIDC Chakan, Pune, Maharashtra. It requires 10 statutory clearances, with 3 ready for immediate filing, 1 in review, and 3 blocked by prerequisites. Clearances are tracked against Maharashtra Right to Services SLAs.',
       mode: 'offline',
@@ -1111,18 +1399,18 @@ export function generateApproveClientAnswer(
     };
   }
 
-  // 3. Blocked Clearances & Prerequisites / "Why blocked" / "Bottlenecks"
+  // 3. Blocked Clearances & Prerequisites / Bottlenecks
   if (/blocked|prerequisite|why.*block|stuck|bottleneck|waiting for|dependency|dependencies/.test(q)) {
     return {
       reply: [
         '### 🛑 Blocked Clearances & Prerequisite Dependencies',
         '',
-        '1. **MPCB Consent to Operate (CTO-001)**: Gated by *MPCB Consent to Establish (CTE)*. Once CTE is granted and your effluent treatment plant (ETP) is commissioned, CTO automatically unlocks.',
-        '2. **Final Fire Safety Certificate (Final Fire NOC)**: Gated by *Provisional Fire NOC* and physical fire-fighting equipment installation certificate.',
-        '3. **DISH Factory Operational Licence**: Gated by *DISH Building Plan Approval* under Rule 3 of Maharashtra Factory Rules.',
-        '4. **Excise Brand & Label Registration**: Gated by *Excise Brewery Licence (BRL-001)*.',
+        '1. **MPCB Consent to Operate (CTO-001)**: Strictly gated by **MPCB Consent to Establish (CTE)** and physical commissioning of your 15–20 KLD Effluent Treatment Plant (ETP).',
+        '2. **Final Fire Safety Certificate (Final Fire NOC)**: Gated by **Provisional Fire NOC** and submission of Form A/B compliance certificate certifying hydro-testing of hydrants and sprinkler response.',
+        '3. **DISH Factory Operational Licence**: Gated by **DISH Building Plan Approval** under Rule 3 of Maharashtra Factories Rules and physical plant erection.',
+        '4. **Excise Brand & Label Registration**: Gated by issuance of primary **Excise Brewery Licence (BRL-001)**.',
         '',
-        'Submitting your 3 available filings (DISH Plan, MPCB CTE, Provisional Fire) will clear the critical path to unblock these operations.',
+        'Filing your 3 available applications (DISH Plan, MPCB CTE, Provisional Fire) unlocks the critical path to unblock these operations.',
       ].join('\n'),
       spokenText: 'You currently have 3 blocked clearances. For instance, your MPCB Consent to Operate is blocked until Consent to Establish is issued, and your Final Fire NOC requires prior Provisional Fire clearance and physical construction completion.',
       mode: 'offline',
@@ -1130,20 +1418,20 @@ export function generateApproveClientAnswer(
     };
   }
 
-  // 4. Available / Next Steps / "What to do next" / "Pending"
-  if (/pending|next|what to do|available|status|action|priority|todo/.test(q)) {
+  // 4. Immediate Priority Actions / What To Do Next
+  if (/pending|next|what to do|available|status|action|priority|todo|where to start|first step/.test(q)) {
     return {
       reply: [
-        '### 📋 Immediate Priority Actions',
+        '### 📋 Immediate Priority Action Plan',
         '',
-        '1. **File 3 Ready Clearances in Parallel**:',
-        '   - **DISH Plan Approval**: Directorate of Industrial Safety & Health (30-day RTS SLA).',
-        '   - **MPCB Consent to Establish (CTE)**: Orange category industrial pollution consent (45-day RTS SLA).',
+        '1. **Submit 3 Available Clearances in Parallel**:',
+        '   - **DISH Factory Plan Approval**: Directorate of Industrial Safety & Health (30-day RTS SLA).',
+        '   - **MPCB Consent to Establish (CTE)**: Orange category pollution consent (45-day RTS SLA).',
         '   - **Provisional Fire NOC**: MIDC Fire Services building drawing clearance (15-day RTS SLA).',
         '2. **Complete Document Vault**:',
-        '   - Upload registered MIDC lease deed and ETP process flow diagram.',
-        '3. **Claim Priority Credit**:',
-        '   - Apply for the ₹5 Cr CGTMSE collateral-free credit guarantee via SIDBI partner banks.',
+        '   - Upload your registered **MIDC Lease Deed** and **ETP Process Flow & P&ID Diagram**.',
+        '3. **Secure Financial Guarantee**:',
+        '   - Submit your loan dossier for the **₹5.00 Cr CGTMSE** collateral-free credit facility through SIDBI/SBI.',
       ].join('\n'),
       spokenText: 'Your next steps are to submit the 3 available clearances: DISH Factory Plan Approval, MPCB Consent to Establish, and Provisional Fire NOC. Also, upload your registered MIDC lease deed and ETP flow diagram to your Document Vault.',
       mode: 'offline',
@@ -1154,131 +1442,665 @@ export function generateApproveClientAnswer(
     };
   }
 
-  // 5. Schemes & Incentives / Subsidies / CGTMSE / EPCG / ZED
-  if (/scheme|incentive|subsidy|subsidies|grant|cgtmse|epcg|zed|tax holiday|funding|loan|credit|psi/.test(q)) {
+  // 5. MPCB Consent to Establish (CTE)
+  if (/cte\b|consent to establish|mpcb.*establish|pollution.*establish|pollution board/.test(q)) {
     return {
       reply: [
-        '### 💰 Government Schemes & Fiscal Incentives',
+        '### 🌿 MPCB Consent to Establish (CTE) — Regulatory Blueprint',
         '',
-        '- **CGTMSE Collateral-Free Credit Guarantee**: Up to **₹5.00 Crore** credit facility without third-party collateral (85% sovereign guarantee cover for MSMEs).',
-        '- **EPCG Capital Goods Import Scheme**: **0% customs duty** on imported brewery and bottling equipment against an export obligation of 6x duty saved over 6 years.',
-        '- **MSME ZED (Zero Defect Zero Effect)**: **80% subsidy** on green manufacturing certification, water recycling, and ETP standards.',
-        '- **Section 80-IAC Tax Holiday**: 100% corporate income tax holiday for 3 consecutive financial years if registered with DPIIT.',
-        '- ⚠️ **Maharashtra PSI 2019 Advisory**: Direct state capital subsidies exclude alcohol/distillery manufacturing under Annexure II negative list, but central credit guarantees and duty concessions remain 100% accessible.',
+        '- **Competent Authority**: Maharashtra Pollution Control Board (MPCB), Sub-Regional Office Pune-II.',
+        '- **Industrial Classification**: Orange Category (Fermentation & Potable Alcohol Manufacturing).',
+        '- **Statutory SLA**: **45 working days** under Maharashtra Right to Services (RTS) Act 2015. Deemed approval activates on day 46 if no formal query is raised.',
+        '- **Technical Mandates**:',
+        '  - Dedicated **15–20 KLD Effluent Treatment Plant (ETP)** treating trade wastewater to BOD < 30 mg/L, COD < 250 mg/L, TSS < 100 mg/L before discharge into the MIDC Chakan sewer network.',
+        '  - Acoustic enclosure on backup DG sets (75 dB at 1m) and stack height conforming to CPCB formulas.',
+        '- **Statutory Fee**: ₹50,000 to ₹75,000 (calculated on ₹4.00 Cr Gross Capital Investment).',
+        '- **Status**: **Ready for Immediate Submission** (Application ID: MPCB-CTE-2026-034).',
       ].join('\n'),
-      spokenText: 'Your enterprise qualifies for three major national programs: a ₹5 Crore collateral-free credit guarantee under CGTMSE, 0% customs duty machinery imports under the EPCG scheme, and an 80% subsidy for MSME ZED green certification. Note that state PSI 2019 cash subsidies exclude alcohol manufacturing under Annexure II.',
+      spokenText: 'Your MPCB Consent to Establish is ready for submission under the Orange category with a 45 working day SLA. It requires a 15 to 20 KLD effluent treatment plant with BOD under 30 milligrams per litre and statutory fees between fifty and seventy-five thousand rupees.',
       mode: 'offline',
-      actions: [{ type: 'navigate', target: 'schemes', label: 'Explore Schemes & Incentives' }],
+      actions: [
+        { type: 'navigate', target: 'roadmap', label: 'Submit CTE' },
+        { type: 'navigate', target: 'vault', label: 'Check ETP Drawings' },
+      ],
     };
   }
 
-  // 6. Timeline & Costs / Right to Services SLA
-  if (/sla|time|timeline|how long|days|cost|fee|budget|duration|expense/.test(q)) {
+  // 6. MPCB Consent to Operate (CTO)
+  if (/cto\b|consent to operate|mpcb.*operate|pollution.*operate|operating consent|trial run|trial production/.test(q)) {
     return {
       reply: [
-        '### ⏱️ Statutory Timeline & Cost Forecast',
+        '### 🏭 MPCB Consent to Operate (CTO) — Pre-Commissioning Rules',
         '',
-        '- **Total Critical Path Duration**: **45 to 65 working days**.',
-        '- **Right to Services (RTS) Protection**: Clearances are subject to statutory deemed-approval clauses under the Maharashtra RTS Act 2015 if competent authorities delay beyond notified SLAs.',
-        '- **Statutory Fee Schedule**:',
-        '  - MPCB Consent to Establish (CTE): ₹50,000 – ₹75,000 (based on capital investment).',
-        '  - Provisional Fire NOC: ₹25,000.',
-        '  - DISH Building Plan Approval: ₹15,000.',
-        '  - State Excise BRL Licence: ₹1,00,000.',
-        '  - **Total Projected Statutory Fees**: **₹1,85,000 – ₹2,40,000**.',
+        '- **Competent Authority**: Maharashtra Pollution Control Board (MPCB), Regional Office Pune.',
+        '- **Prerequisite**: Strictly gated by **MPCB Consent to Establish (CTE)** and physical completion of plant construction & ETP erection.',
+        '- **Statutory SLA**: **30 working days** under the RTS Act.',
+        '- **Mandatory Submission Documents**:',
+        '  1. CA-certified Capital Investment Certificate verifying final plant cost.',
+        '  2. ETP adequacy and performance report certified by an MoEF/NABL recognized laboratory.',
+        '  3. Point-to-point compliance report against all CTE conditional terms.',
+        '- ⚠️ **Legal Warning**: Operating brewing machinery without a valid CTO attracts immediate closure notices under Section 33A of the Water Act 1974, disconnection of electricity/water, and criminal penalties.',
       ].join('\n'),
-      spokenText: 'Statutory readiness for Pune Craft Brewery is projected at 45 to 65 working days on the critical path, governed by Maharashtra Right to Services Act SLAs with deemed-approval clauses. Estimated statutory government fees total ₹1,85,000 to ₹2,40,000.',
+      spokenText: 'MPCB Consent to Operate is strictly gated by prior Consent to Establish and physical ETP commissioning. Operating without CTO is illegal and subject to immediate power disconnection and closure under Section 33A of the Water Act.',
       mode: 'offline',
-      actions: [{ type: 'navigate', target: 'time-cost', label: 'View Time & Cost Forecast' }],
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'View Roadmap' }],
     };
   }
 
-  // 7. Documents & Vault
-  if (/document|vault|missing doc|verification|upload|paperwork|form/.test(q)) {
+  // 7. Effluent Treatment Plant (ETP) & Discharge Norms
+  if (/etp\b|effluent|wastewater|sewage|bod\b|cod\b|tss\b|ph\b|zero liquid discharge|zld|discharge|chakan cetp|pollution treatment/.test(q)) {
     return {
       reply: [
-        '### 📁 Document Vault & Verification Status',
+        '### 💧 Effluent Treatment Plant (ETP) & Environmental Standards',
         '',
-        '- **Verified Files (4)**: Company PAN, Certificate of Incorporation, Board Resolution, Site Layout Drawing.',
-        '- **Missing Mandatory Files (2)**:',
-        '  1. **Registered MIDC Lease Deed**: Gating MPCB CTE & DISH Plan.',
-        '  2. **Effluent Treatment Plant (ETP) Process Flow & Schematics**: Required for pollution board consent.',
-        '- Upload verified PDFs to auto-populate statutory portal forms across MAITRI and Single Window hubs.',
+        '- **Design Capacity**: 15 to 20 KLD (Kilolitres per day) hydraulic handling capacity.',
+        '- **Brewery Effluent Characteristics**: High organic load (spent wort, yeast trub, CIP washdown) with raw BOD ~3,000 mg/L and COD ~6,000 mg/L.',
+        '- **Required Treatment Train**:',
+        '  1. **Primary**: Bar screening + Oil & Grease trap + Equalization tank with coarse air diffusion.',
+        '  2. **Secondary (Biological)**: Anaerobic UASB reactor (recovering 75% COD) followed by Aerobic Activated Sludge / MBBR aeration.',
+        '  3. **Tertiary**: Secondary clarifier + Pressure Sand Filter + Activated Carbon Filter + Sludge drying beds.',
+        '- **Treated Discharge Standards (MIDC Sewer into Chakan CETP)**:',
+        '  - **BOD**: $\\le 30$ mg/L | **COD**: $\\le 250$ mg/L | **TSS**: $\\le 100$ mg/L | **pH**: 6.5 – 8.5.',
+        '  - Zero untreated effluent discharge permitted outside premises.',
       ].join('\n'),
-      spokenText: 'Your document vault has 4 verified statutory documents. You have 2 missing mandatory documents required for MPCB CTE: the registered MIDC Lease Deed and the ETP Process Flow Diagram.',
+      spokenText: 'Your brewery requires a 15 to 20 KLD Effluent Treatment Plant with primary screening, anaerobic UASB, and aerobic MBBR stages. Treated discharge must meet MPCB limits of BOD under 30 and COD under 250 before entering the MIDC Chakan sewer network.',
       mode: 'offline',
-      actions: [{ type: 'navigate', target: 'vault', label: 'Open Document Vault' }],
+      actions: [{ type: 'navigate', target: 'vault', label: 'Upload ETP Flow Diagram' }],
     };
   }
 
-  // 8. Inspections
-  if (/inspection|joint inspection|site visit|auditor/.test(q)) {
+  // 8. Brewers Spent Grain (BSG), Waste Disposal & Cattle Feed
+  if (/spent grain|bsg|spent malt|cattle feed|spent yeast|byproduct|by-product|waste disposal|organic waste/.test(q)) {
     return {
       reply: [
-        '### 🔍 Statutory Inspections Schedule',
+        '### 🌾 Brewers Spent Grain (BSG) & Waste Management Protocols',
         '',
-        '- **Joint Site Inspection**: MPCB and MIDC Fire Services conduct a single synchronized inspection within 14 days of CTE submission under Ease of Doing Business mandates.',
-        '- **DISH Factory Safety Inspection**: Pre-commissioning verification of plant safety guards, pressure vessels, and worker emergency exits.',
+        '- **Generation Rate**: Approximately 20 kg of wet spent grain per 100 litres of finished craft beer.',
+        '- **Nutritional Value & Commercial Off-Take**: High protein (28% dry basis) and digestible fiber, highly prized as supplementary cattle feed.',
+        '- **Regulatory Mandate under MPCB Solid Waste Rules**:',
+        '  - Must not be disposed into municipal dump-yards or open land.',
+        '  - Must be collected in covered, stainless or HDPE hoppers with drainage traps for leachate.',
+        '  - Enter into a formal buy-back / off-take agreement with local dairy cooperatives in Khed/Chakan for daily collection within 24 hours of lautering.',
       ].join('\n'),
-      spokenText: 'Your project requires 2 statutory inspections: a Joint Site Inspection by MPCB and MIDC Fire Services prior to CTE, and a final factory inspection by the Directorate of Industrial Safety and Health.',
+      spokenText: 'Brewers spent grain must be stored in covered hoppers and collected daily under off-take contracts with local Pune dairy farms as cattle feed. MPCB strictly prohibits open landfill disposal of organic brewing waste.',
       mode: 'offline',
-      actions: [{ type: 'navigate', target: 'inspections', label: 'View Inspection Schedule' }],
+      actions: [{ type: 'navigate', target: 'vault', label: 'Store Off-take Contract' }],
     };
   }
 
-  // Default Rich Response
-  return {
-    reply: [
-      '### 👋 I\'m Approve, your AI Voice Copilot',
-      '',
-      'I have complete visibility into your **Pune Craft Brewery** case file:',
-      '- **10 Applicable Statutory Clearances** (3 ready to file, 1 in review, 3 blocked by dependencies).',
-      '- **45–65 Working Days SLA Timeline** under the Maharashtra RTS Act.',
-      '- **₹5.00 Cr CGTMSE Credit Guarantee & 0% EPCG Duty Waiver**.',
-      '',
-      'You can speak or type questions like:',
-      '- *"What approvals are blocked?"*',
-      '- *"What do I need to do next?"*',
-      '- *"What subsidies am I eligible for?"*',
-      '- *"How long will my clearances take?"*',
-      '- *"Show me my document vault"*',
-    ].join('\n'),
-    spokenText: 'I\'m Approve, your voice assistant for ApprovalIQ. For your Pune Craft Brewery project, you have 10 statutory clearances, 3 ready to file, and 3 blocked by prerequisites. You are also eligible for ₹5 Crore CGTMSE financing and 0% duty machinery imports. What would you like to explore?',
-    mode: 'offline',
-    actions: [
-      { type: 'navigate', target: 'roadmap', label: 'Open Roadmap' },
-      { type: 'navigate', target: 'schemes', label: 'View Schemes' },
-    ],
-  };
+  // 9. State Excise Brewery Licence (Form BRL-001)
+  if (/brl\b|brl-001|excise.*licen[sc]e|brewery licen[sc]e|bottling licen[sc]e|state excise|excise commissioner|bonded warehouse|potable alcohol/.test(q)) {
+    return {
+      reply: [
+        '### 🍺 Maharashtra State Excise Brewery & Bottling Licence (Form BRL-001)',
+        '',
+        '- **Competent Authority**: Commissioner of State Excise, Maharashtra State (Old Custom House, Fort, Mumbai).',
+        '- **Current Status**: **In Review** (Application ID: EX-BRL-2026-088, Superintendent of State Excise, Pune).',
+        '- **Statutory Scope**: Permits commercial brewing, packaging into glass bottles (330ml, 500ml, 650ml), aluminum cans, and stainless kegs for wholesale distribution.',
+        '- **Key Operational Conditions**:',
+        '  - Stationing of a dedicated **State Excise Sub-Inspector (SI)** at the brewery premises 24/7.',
+        '  - Double-lock bonded finished goods warehouse (one key held by State Excise, one by licensee).',
+        '  - Calibrated mass flow meters on brewing kettles and packaging lines.',
+        '- **Licence Fee**: ₹1,00,000 annual licence fee + ₹50,000 security deposit.',
+      ].join('\n'),
+      spokenText: 'Your State Excise Brewery Licence Form BRL-001 is currently in review. It authorizes commercial brewing and bottling with a dedicated Excise Sub-Inspector stationed at the brewery, an annual fee of one lakh rupees, and a fifty thousand rupee deposit.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'Check Excise Status' }],
+    };
+  }
+
+  // 10. Excise Brand & Label Registration
+  if (/label\b|brand\b|label registration|brand registration|brand approval|hologram|excise sticker|qr code|packaging label/.test(q)) {
+    return {
+      reply: [
+        '### 🏷️ Excise Brand & Label Registration Protocol',
+        '',
+        '- **Competent Authority**: Commissioner of State Excise, Maharashtra State.',
+        '- **Prerequisite**: Gated by primary Brewery Licence (BRL-001).',
+        '- **Testing & Validation**:',
+        '  - Chemical analysis certificate from State Excise Chemical Laboratory (Vakola, Mumbai) verifying Alcohol by Volume (ABV), real extract, and total acidity.',
+        '- **Mandatory Label Declarations**:',
+        '  1. Statutory Warning: *"CONSUMPTION OF ALCOHOL IS INJURIOUS TO HEALTH / BE SAFE-DONT DRINK AND DRIVE"* in English and Marathi.',
+        '  2. High-security excise track-and-trace hologram / QR code on crown caps or can lids.',
+        '  3. Declared Maximum Retail Price (MRP) and batch identification code.',
+        '- **Annual Brand Registration Fee**: ₹25,000 per brand variant.',
+      ].join('\n'),
+      spokenText: 'Brand and label registration is gated by your brewery licence. It requires chemical verification from the State Excise Laboratory in Vakola, statutory health warnings in English and Marathi, excise security holograms, and a twenty-five thousand rupee fee per variant.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'View Label Dependencies' }],
+    };
+  }
+
+  // 11. Retail Distribution, On-Premise Sales, Wine Shops & Restaurants
+  if (/retail|sell|selling|wine shop|restaurant|permit room|bar\b|can i sell|customer|direct sale|counter sale|distributor|wholesale|keg|can I distribute/.test(q)) {
+    return {
+      reply: [
+        '### 🚚 Commercial Distribution & Retail Sales Regulations',
+        '',
+        '- **Factory Gate Over-The-Counter Sales**: ❌ **Strictly Prohibited**. As a commercial production brewery (Form BRL-001), you cannot sell beer directly across the counter to retail consumers (that privilege is reserved for brewpub restaurants under Form BRL-II).',
+        '- **Permitted Wholesale Channels**:',
+        '  1. **FL-II Licensed Retail Wine Shops**: Bottled and canned craft beer packaged in 330ml, 500ml, and 650ml SKUs.',
+        '  2. **FL-III Licensed Restaurants, Hotels & Permit Rooms**: Bottled beer and 20L/30L/50L stainless steel draft kegs.',
+        '  3. **Licensed Wholesale Distributors**: Bulk distribution throughout Maharashtra.',
+        '- **Transport Protocol**: Every dispatch from the bonded warehouse must carry an **Excise Transport Pass (Form FL-I pass)** generated through the State Excise online portal.',
+      ].join('\n'),
+      spokenText: 'Under your commercial brewery licence, you cannot sell directly to retail customers over the counter at the factory gate. You can sell at wholesale to licensed wine shops, hotels, and permit rooms across Maharashtra using State Excise transport passes.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'View Excise Approvals' }],
+    };
+  }
+
+  // 12. Brewpub vs Commercial Production Brewery
+  if (/brewpub|microbrewery|commercial brewery|difference between brewpub|on-premise|on premise/.test(q)) {
+    return {
+      reply: [
+        '### ⚖️ Brewpub (BRL-II) vs Commercial Production Brewery (BRL-001)',
+        '',
+        '| Parameter | Brewpub (Form BRL-II) | Commercial Brewery (Form BRL-001, Pune Craft Brewery) |',
+        '|---|---|---|',
+        '| **Primary Scope** | On-premise draft beer served to restaurant diners | Production brewing, packaging in bottles/cans/kegs for wholesale |',
+        '| **Capacity Cap** | Max 500,000 Litres/Year (under 5,000L/day) | Uncapped industrial production scaled to installed equipment |',
+        '| **Packaging** | Draft dispensing into glasses/growlers only | Automated bottling line (330/500/650ml), canning, and commercial kegging |',
+        '| **Retail Distribution**| On-site restaurant patrons only | Statewide distribution to FL-II shops, FL-III bars, and distributors |',
+        '| **Location Zoning** | Commercial restaurants, malls, high streets | Pre-approved industrial zone (MIDC Chakan Phase II) |',
+      ].join('\n'),
+      spokenText: 'Pune Craft Brewery is a commercial production brewery under Form BRL-001, not a brewpub. This enables industrial packaging into bottles, cans, and kegs for statewide wholesale distribution, whereas brewpubs are restricted to on-premise restaurant dispensing.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'profile', label: 'View Profile' }],
+    };
+  }
+
+  // 13. Interstate Shipments & Export
+  if (/interstate|other states|export|goa|karnataka|delhi|mumbai|transport permit|outside maharashtra|transit pass|fl-1|fl-i/.test(q)) {
+    return {
+      reply: [
+        '### 🌐 Interstate Sales & International Export Compliance',
+        '',
+        '- **Sales to Other Indian States (e.g. Goa, Karnataka, Delhi)**:',
+        '  1. Obtain **Export NOC** from Maharashtra State Excise.',
+        '  2. Consignee must secure an **Import Permit** from the receiving state excise department.',
+        '  3. Register brand labels with the receiving state excise authority.',
+        '  4. Shipments move under excise bond with digital transit passes.',
+        '- **International Exports**:',
+        '  - Requires Importer-Exporter Code (IEC) from DGFT.',
+        '  - Zero State Excise Duty applies to exported alcoholic beverages shipped under Customs Bond.',
+        '  - Earns foreign exchange credits toward fulfilling your **EPCG 6x export obligation**.',
+      ].join('\n'),
+      spokenText: 'Interstate beer sales require an Export NOC from Maharashtra and an Import Permit from the receiving state. International exports are exempt from state excise duty under bond and count toward your EPCG export obligations.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'Check EPCG Terms' }],
+    };
+  }
+
+  // 14. Excise Duty Rates & Calculation
+  if (/excise duty|duty rate|how much excise|tax per bottle|alcohol tax|excise slab/.test(q)) {
+    return {
+      reply: [
+        '### 💰 Maharashtra State Excise Duty Slabs on Beer',
+        '',
+        '- **Mild Beer (Alcohol By Volume $\\le 5.0\\%$)**:',
+        '  - Excise Duty: **₹115 per bulk litre** (or approximately ₹74.75 per 650ml bottle), calculated against the manufacturing cost slab.',
+        '- **Strong Beer (Alcohol By Volume $> 5.0\\%$ up to $8.0\\%$)**:',
+        '  - Excise Duty: **₹175 per bulk litre** (or 100% of manufacturing cost, whichever is higher, ~₹113.75 per 650ml bottle).',
+        '- **Assessment & Payment**:',
+        '  - Assessed by the resident Excise Sub-Inspector before release from the bonded warehouse.',
+        '  - Remitted online through the Maharashtra Government Receipt Accounting System (GRAS).',
+      ].join('\n'),
+      spokenText: 'In Maharashtra, State Excise duty is approximately 115 rupees per bulk litre for mild beer under 5% ABV, and 175 rupees per bulk litre or 100% of manufacturing cost for strong beer up to 8% ABV.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'time-cost', label: 'View Cost Model' }],
+    };
+  }
+
+  // 15. DISH Factory Building Plan Approval (Rule 3)
+  if (/dish.*plan|building plan|factory plan|rule 3|headroom|gangway|dish.*approval/.test(q)) {
+    return {
+      reply: [
+        '### 📐 DISH Factory Building Plan Approval (Rule 3)',
+        '',
+        '- **Competent Authority**: Directorate of Industrial Safety & Health (DISH), Maharashtra, Pune Regional Office.',
+        '- **Governing Law**: Section 6 of Factories Act, 1948 and Rule 3 of Maharashtra Factories Rules, 1963.',
+        '- **Status**: **Ready for Immediate Submission** (Application ID: DISH-PLN-2026-041).',
+        '- **RTS SLA**: **30 working days**.',
+        '- **Architectural Compliance Checklist**:',
+        '  - Minimum headroom of **4.2 meters** in brewing and bottling halls.',
+        '  - Gangways and circulation corridors minimum **1.5 meters** wide, marked with yellow epoxy floor lines.',
+        '  - Emergency exit doors opening outwards with panic hardware, leading to unobstructed assembly points.',
+        '  - Lighting levels minimum 150 lux in processing areas and 300 lux on bottling inspection stations.',
+        '- **Statutory Fee**: ₹15,000.',
+      ].join('\n'),
+      spokenText: 'DISH Factory Building Plan Approval is ready for filing under Rule 3 with a 30 working day SLA. It requires 4.2 meter headroom, 1.5 meter gangways, outward opening emergency doors, and fifteen thousand rupees in statutory fees.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'Submit DISH Plan' }],
+    };
+  }
+
+  // 16. DISH Factory Operational Licence (Section 6/7)
+  if (/dish.*licen[sc]e|factory licen[sc]e|factory license|operational licen[sc]e|factories act/.test(q)) {
+    return {
+      reply: [
+        '### ⚙️ DISH Factory Operational Licence (Section 6 & 7)',
+        '',
+        '- **Competent Authority**: Joint Director of Industrial Safety & Health, Pune Division.',
+        '- **Prerequisite**: Gated by **DISH Building Plan Approval** and physical erection of plant & machinery.',
+        '- **RTS SLA**: **30 working days**.',
+        '- **Parameters**: 25 workers, 150 HP connected electrical load.',
+        '- **Mandatory Compliances**:',
+        '  - Appointment of qualified first-aiders on every shift.',
+        '  - Statutory registers: Form 1 Inspection Book, Form 7 Health Register, Form 11 Overtime Register.',
+        '  - CA-certified machinery valuation certificate and machine guarding certificates.',
+      ].join('\n'),
+      spokenText: 'The DISH Factory Operational Licence is gated by your building plan approval and machinery installation. It covers 25 workers and 150 HP connected load under a 30 working day SLA.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'View DISH Milestones' }],
+    };
+  }
+
+  // 17. Fire Safety Clearances (Provisional vs Final Fire NOC)
+  if (/fire|fire noc|provisional fire|final fire|hydrant|sprinkler|midc fire|fire station chakan/.test(q)) {
+    return {
+      reply: [
+        '### 🚒 Fire Safety Clearances (Provisional & Final Fire NOC)',
+        '',
+        '- **Competent Authority**: MIDC Fire Services, Chakan Fire Station / Chief Fire Officer MIDC.',
+        '- **Provisional Fire NOC**:',
+        '  - Status: **Ready for Immediate Submission** (App ID: MIDC-FNOC-2026-019).',
+        '  - RTS SLA: **15 working days** | Statutory Fee: ₹25,000.',
+        '  - Approves building fire prevention schematics: 6-meter all-around fire tender peripheral road, 50,000L underground static water tank, yard hydrants, and sprinkler layout.',
+        '- **Final Fire NOC**:',
+        '  - Gated by physical building completion and submission of **Form A/B certificate** from an empanelled Licensed Fire Agency after hydro-testing hydrants.',
+      ].join('\n'),
+      spokenText: 'Provisional Fire NOC from MIDC Fire Services is ready for submission with a 15 working day SLA and twenty-five thousand rupee fee. Final Fire NOC is issued post-construction following hydro-testing of hydrants and sprinkler lines.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'Submit Provisional Fire' }],
+    };
+  }
+
+  // 18. FSSAI Central License for Alcoholic Beverages
+  if (/fssai|food safety|food licen[sc]e|food authority|potable water test|is 10500|shelf life|fsms|haccp/.test(q)) {
+    return {
+      reply: [
+        '### 🛡️ FSSAI Central License for Alcoholic Beverages',
+        '',
+        '- **Competent Authority**: Food Safety and Standards Authority of India (FSSAI), Western Regional Office, Mumbai.',
+        '- **Licence Class**: **Central License** (manufacturing capacity > 2 kl/day requires Central licensing under Schedule 1).',
+        '- **Governing Regulations**: Food Safety and Standards (Alcoholic Beverages) Regulations, 2018.',
+        '- **Critical Mandates**:',
+        '  1. **IS 10500:2012 Water Potability Certificate**: Tested for microbiological purity, heavy metals (Lead < 0.2 ppm, Arsenic < 0.25 ppm), and mineral hardness.',
+        '  2. **FSMS Plan**: Food Safety Management System plan and HACCP protocols.',
+        '  3. Retention of batch brew sheets and retention samples for the full declared shelf life.',
+        '- **Statutory Fee**: ₹7,500 annual fee.',
+      ].join('\n'),
+      spokenText: 'FSSAI Central Licensing is mandatory for alcoholic beverage manufacturing over 2 kilolitres per day. It requires IS 10500 water testing, a Food Safety Management System, and a seven thousand five hundred rupee annual fee.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'View FSSAI Clearance' }],
+    };
+  }
+
+  // 19. Legal Metrology Packaged Commodities (LMPC) Rule 27
+  if (/legal metrology|lmpc|rule 27|packaged commodities|weights and measures|bottle declaration|mrp|330ml|500ml|650ml/.test(q)) {
+    return {
+      reply: [
+        '### ⚖️ Legal Metrology Packaged Commodities (LMPC) Rule 27',
+        '',
+        '- **Competent Authority**: Controller of Legal Metrology, Maharashtra State.',
+        '- **Governing Law**: Rule 27 of Legal Metrology (Packaged Commodities) Rules, 2011.',
+        '- **Mandatory Label Declarations**:',
+        '  1. Generic Name: *"Craft Beer"* or *"Beer"* with Alcohol by Volume (% ABV) in font size $\\ge 4$ mm.',
+        '  2. Net Quantity in standard SI units: **330 ml**, **500 ml**, or **650 ml**.',
+        '  3. Maximum Retail Price (MRP) in ₹ inclusive of all taxes.',
+        '  4. Month and Year of packaging and "Best Before" date.',
+        '  5. Name, address, and consumer care email/phone of manufacturer.',
+        '- Calibrated electronic flow meters and checkweighers on bottling conveyor belts.',
+      ].join('\n'),
+      spokenText: 'Legal Metrology Rule 27 mandates standard bottle sizes of 330ml, 500ml, or 650ml, clear MRP declarations inclusive of taxes, ABV percentage with at least 4 millimeter font, and consumer care contact details.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'Check LMPC Status' }],
+    };
+  }
+
+  // 20. Water Infrastructure, Consumption & MIDC Pipeline
+  if (/water|water supply|midc water|water requirement|water consumption|litres of water|ro plant|borewell|potable water/.test(q)) {
+    return {
+      reply: [
+        '### 💧 Water Sourcing, Consumption & Treatment (MIDC Chakan)',
+        '',
+        '- **Brewing Water Ratio**: Typically 4:1 to 5:1 litres of water per litre of finished beer.',
+        '- **Total Daily Industrial Consumption**: **20 to 30 KLD** (brewing liquor, vessel CIP washing, boiler feed, cooling tower make-up).',
+        '- **Sourcing**: Piped industrial water supply line from MIDC Chakan water works (50mm connection with ultrasonic telemetry flow meter).',
+        '- **Water Treatment Plant (WTP)**: Raw MIDC water is passed through Multi-Grade Sand Filter + Activated Carbon Filter + RO / Softening to adjust calcium/sulfate brewing ions and satisfy **IS 10500** standards.',
+      ].join('\n'),
+      spokenText: 'Pune Craft Brewery requires 20 to 30 KLD of water sourced from the MIDC Chakan piped supply. The incoming water must be treated through sand, carbon, and reverse osmosis filtration to ensure IS 10500 potability standards.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'vault', label: 'View Water Schematics' }],
+    };
+  }
+
+  // 21. Electrical Power Load & MSEDCL Connection
+  if (/power|electricity|msedcl|connected load|transformer|kva|feeder|substation|dg set|power supply/.test(q)) {
+    return {
+      reply: [
+        '### ⚡ Electrical Power & MSEDCL Infrastructure',
+        '',
+        '- **Sanctioned Connected Load**: **150 kVA** High Tension (HT) connection on 11 kV/22 kV feeder from MSEDCL Chakan industrial substation.',
+        '- **Transformer**: 200 kVA step-down indoor transformer (11 kV to 415 V, 3-phase, 50 Hz).',
+        '- **Statutory Approval**: Electrical installation drawings approved by Chief Electrical Inspector (CEI), Pune Division.',
+        '- **Backup Power**: 125 kVA silent diesel generator set with CPCB-approved acoustic canopy and elevated exhaust stack.',
+      ].join('\n'),
+      spokenText: 'Your brewery requires a 150 kVA High Tension power connection from MSEDCL Chakan with an indoor step-down transformer approved by the Chief Electrical Inspector, backed by a 125 kVA silent generator.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'vault', label: 'View Electrical SLD' }],
+    };
+  }
+
+  // 22. Steam Boilers & Indian Boiler Regulations (IBR)
+  if (/boiler|steam|ibr|pressure vessel|steam generator|kettle heating|mash tun heating/.test(q)) {
+    return {
+      reply: [
+        '### ♨️ Process Steam, Boilers & Pressure Vessels',
+        '',
+        '- **Process Role**: Steam heating is required for mash conversion, wort boiling in the copper kettle, and hot CIP sanitization.',
+        '- **IBR Exemption Threshold**: A packaged steam generator with a water capacity **under 25 litres** and operating pressure **below 3.5 kg/cm²** qualifies as **Non-IBR**, exempting you from full-time certified boiler attendant mandates.',
+        '- **Standard IBR Boilers**: Units exceeding 25 litres require registration with the Directorate of Steam Boilers, Maharashtra, annual hydraulic pressure testing, and certified steam pipeline drawings.',
+      ].join('\n'),
+      spokenText: 'Brewing process steam is required for mashing and boiling. Selecting a packaged steam generator under 25 litres water capacity operates under Non-IBR rules, avoiding full-time certified boiler attendant mandates.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'View Boiler Approvals' }],
+    };
+  }
+
+  // 23. Maharashtra Right to Services (RTS) Act 2015 & Deemed Approval
+  if (/rts|right to service|right to services|deemed approval|automatic approval|sla guarantee|day 46|officer delay/.test(q)) {
+    return {
+      reply: [
+        '### ⚖️ Maharashtra Right to Services (RTS) Act 2015 & Deemed Approvals',
+        '',
+        '- **Statutory Legal Guarantee**: All 10 clearances for Pune Craft Brewery are notified public services under the Maharashtra RTS Act 2015 with binding statutory SLAs (e.g., Fire 15 days, DISH 30 days, MPCB 45 days).',
+        '- **Deemed Approval Clause (Section 9)**:',
+        '  - If a competent authority fails to either grant approval or raise a reasoned written query within the notified SLA, **the clearance is legally deemed approved**.',
+        '  - The MAITRI portal automatically generates a digitally signed Deemed Approval Certificate carrying full evidentiary force.',
+        '- **Protection against Rejection**: Officers cannot reject applications without written statutory cause.',
+      ].join('\n'),
+      spokenText: 'Under the Maharashtra Right to Services Act 2015, all your clearances have binding statutory SLAs. If an officer fails to act within the SLA, Section 9 triggers automatic deemed approval with a valid digital certificate.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'time-cost', label: 'View RTS SLAs' }],
+    };
+  }
+
+  // 24. Officer Delay Penalties & Grievance Redressal
+  if (/delay penalty|officer not responding|officer fine|grievance|complain|fine officer|punish officer|harassment/.test(q)) {
+    return {
+      reply: [
+        '### 🚨 Officer Delay Penalties & Grievance Redressal',
+        '',
+        '- **Statutory Financial Fines (Section 10 of RTS Act)**:',
+        '  - Appellate authorities are legally empowered to impose personal fines of **₹250 to ₹5,000 per day of delay (up to ₹25,000 maximum)** deducted directly from the defaulting officer\'s monthly salary.',
+        '- **Administrative Sanctions**: Willful delays or frivolous queries trigger adverse entries in the officer\'s Annual Confidential Report (ACR) and departmental inquiry.',
+        '- **Escalation Mechanism**: File an instant digital grievance on the MAITRI Grievance Desk for auto-escalation to the Industries Commissioner.',
+      ].join('\n'),
+      spokenText: 'Section 10 of the RTS Act empowers appellate bodies to fine defaulting government officers up to twenty-five thousand rupees, deducted directly from their salary for unjustified clearance delays.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'Open Grievance Desk' }],
+    };
+  }
+
+  // 25. 3-Tier Appeals Hierarchy
+  if (/appeal|first appellate|second appellate|appellate authority|rejected|rejection|license rejected|tribunal|ombudsman/.test(q)) {
+    return {
+      reply: [
+        '### 🏛️ 3-Tier Statutory RTS Appeals Hierarchy',
+        '',
+        '1. **First Appellate Authority (FAA)**: File an appeal within **30 days** of an unjustified rejection or SLA breach to the Joint Director / Superintending Engineer of the respective department. Must be disposed of within 30 days.',
+        '2. **Second Appellate Authority (SAA)**: If FAA fails to grant relief, appeal within **30 days** to the Secretary of Industries / Divisional Commissioner.',
+        '3. **Maharashtra State Right to Services Commission**: Final appeal before the Chief Commissioner of RTS. Has full powers of a Civil Court to summon officers, enforce deemed approvals, and award compensation.',
+      ].join('\n'),
+      spokenText: 'If a clearance is delayed or rejected, you have a 3-tier appeal right under the RTS Act: First Appeal to the Joint Director, Second Appeal to the Secretary of Industries, and Final Appeal to the Chief RTS Commissioner.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'File Appeal' }],
+    };
+  }
+
+  // 26. CGTMSE Collateral-Free Credit Guarantee
+  if (/cgtmse|collateral|credit guarantee|bank loan|loan|term loan|working capital|sidbi|sbi loan/.test(q)) {
+    return {
+      reply: [
+        '### 🏦 CGTMSE Collateral-Free Credit Guarantee (Up to ₹5.00 Crore)',
+        '',
+        '- **Guarantee Amount**: Up to **₹5.00 Crore** term loan and working capital credit facility.',
+        '- **Sovereign Guarantee Cover**: **85% guarantee** provided by CGTMSE (Ministry of MSME and SIDBI).',
+        '- **Zero Collateral Requirement**: No mortgage on personal residential property or third-party guarantees required. Primary security is placed solely on factory equipment and inventory.',
+        '- **Interest Rate Discount**: 1% to 1.5% interest concession under MSME Priority Sector Lending.',
+        '- **Partner Lenders**: State Bank of India, Bank of Baroda, HDFC Bank, ICICI Bank, SIDBI.',
+      ].join('\n'),
+      spokenText: 'Your enterprise qualifies for up to ₹5.00 Crore in collateral-free bank loans under CGTMSE with an 85% sovereign guarantee cover, eliminating the need to mortgage personal immovable property.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'Explore CGTMSE' }],
+    };
+  }
+
+  // 27. EPCG 0% Customs Duty Capital Goods Import
+  if (/epcg|customs|customs duty|import duty|import machinery|zero duty|fermenter import|brewhouse import|dgft/.test(q)) {
+    return {
+      reply: [
+        '### 🚢 EPCG 0% Customs Duty Machinery Import Scheme',
+        '',
+        '- **Core Benefit**: Import high-efficiency brewing kettles, conical fermenters, bright tanks, and bottling lines at **0% basic customs duty** (normally 27.5% combined tariff).',
+        '- **Export Obligation**: Commit to an export obligation equivalent to **6 times the customs duty saved** over a 6-year period.',
+        '- **Fulfillment Modes**: Direct beer exports to foreign markets, or supplies to duty-free bonded stores and foreign embassies.',
+        '- **Procedure**: Obtain Importer-Exporter Code (IEC) from DGFT and file online before equipment bill of lading.',
+      ].join('\n'),
+      spokenText: 'The EPCG scheme allows you to import advanced brewing equipment at 0% customs duty instead of 27.5%, with an obligation to export six times the duty saved over six years.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'View EPCG Details' }],
+    };
+  }
+
+  // 28. Maharashtra PSI 2019 & Annexure II Negative List
+  if (/psi|psi 2019|negative list|annexure ii|state subsidy|sgst refund|capital subsidy|why excluded|why no subsidy/.test(q)) {
+    return {
+      reply: [
+        '### 📜 Maharashtra PSI 2019 & Negative List Explanation',
+        '',
+        '- **Policy Exclusion**: Under the **Maharashtra Package Scheme of Incentives (PSI 2019)**, potable alcohol, brewery, and distillery units are placed under the **Annexure II Negative List** (Item 4).',
+        '- **Impact**: The state government denies direct SGST cash refunds and capital grants to liquor manufacturing units.',
+        '- **What Stays 100% Accessible**: Central CGTMSE ₹5.00 Cr credit guarantees, EPCG 0% duty waivers, Section 80-IAC 3-year tax holidays, MSME ZED subsidies, and state electricity duty exemptions.',
+      ].join('\n'),
+      spokenText: 'Potable alcohol and breweries are categorized under Annexure II of Maharashtra PSI 2019, excluding them from state SGST cash grants. However, Central credit guarantees, customs duty waivers, and tax holidays remain fully available.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'View Eligible Schemes' }],
+    };
+  }
+
+  // 29. Section 80-IAC Corporate Income Tax Holiday
+  if (/80-iac|80iac|tax holiday|income tax|corporate tax|tax exemption|dpiit|startup tax/.test(q)) {
+    return {
+      reply: [
+        '### 💸 Section 80-IAC 3-Year 100% Corporate Tax Holiday',
+        '',
+        '- **Statutory Relief**: **100% deduction of profits** for 3 consecutive financial years out of the first 10 years of incorporation.',
+        '- **Eligibility Requirements**:',
+        '  - Incorporated as a Private Limited Company or LLP on or after April 1, 2016.',
+        '  - Certified as an innovative business by DPIIT (Startup India).',
+        '  - Total annual turnover does not exceed ₹100 Crore.',
+        '- **Application**: File Form-1 on Startup India portal for Inter-Ministerial Board (IMB) tax certification.',
+      ].join('\n'),
+      spokenText: 'Section 80-IAC provides a 100% corporate income tax holiday for 3 consecutive financial years for DPIIT-recognized startups, allowing pre-tax operating profits to fund plant expansion.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'Check 80-IAC Terms' }],
+    };
+  }
+
+  // 30. MSME ZED Green Manufacturing Subsidy
+  if (/zed|zero defect|green subsidy|iso|clean energy|energy audit|environmental subsidy/.test(q)) {
+    return {
+      reply: [
+        '### 🌿 MSME ZED (Zero Defect Zero Effect) Green Subsidy',
+        '',
+        '- **Financial Benefit**: Up to **80% subsidy** on environmental audits, water conservation assessments, cleaner technology adoption, and quality certification costs.',
+        '- **Tiers**: Bronze, Silver, Gold.',
+        '- **Banking Bonus**: Securing ZED certification qualifies your enterprise for an **additional 0.5% interest rate discount** on term loans and working capital.',
+      ].join('\n'),
+      spokenText: 'The MSME ZED scheme provides up to an 80% subsidy on environmental and quality certifications, plus a 0.5% interest rate reduction from partner banks.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'Explore ZED Subsidy' }],
+    };
+  }
+
+  // 31. GST Structure & Indirect Taxation on Beer
+  if (/gst|tax on beer|mvat|vat|indirect tax|input tax credit|itc|tax structure/.test(q)) {
+    return {
+      reply: [
+        '### 🧾 GST & Indirect Tax Structure for Craft Breweries',
+        '',
+        '- **Constitutional Position (Article 366(12A))**: Potable alcohol for human consumption is constitutionally excluded from GST and remains under **Maharashtra State Excise Duty + Maharashtra VAT (MVAT)**.',
+        '- **Input Tax (GST)**: Malt, hops, glass bottles, cans, and brewing plant machinery incur **18% to 28% GST**.',
+        '- **Input Tax Credit (ITC) Treatment**: Because finished beer is outside GST, **GST paid on inputs CANNOT be offset against State Excise or MVAT**. It becomes a direct cost of manufacturing.',
+      ].join('\n'),
+      spokenText: 'Beer is constitutionally outside GST and is taxed under Maharashtra State Excise and MVAT. GST paid on brewing ingredients and packaging cannot be offset against excise duties, forming part of your production cost.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'time-cost', label: 'Check Tax Forecast' }],
+    };
+  }
+
+  // 32. Udyam MSME Registration & 45-Day Payment Protection
+  if (/udyam|msme protection|samadhaan|45 days|payment delay|buyer payment|delayed payment|section 15/.test(q)) {
+    return {
+      reply: [
+        '### 🛡️ Udyam Registration & 45-Day Payment Legal Protections',
+        '',
+        '- **Classification**: Small Enterprise under MSMED Act, 2006.',
+        '- **Section 15 Mandatory Payment**: Buyers (hotel chains, distributors, retailers) are legally required to make payment within **45 days** of delivery.',
+        '- **Section 16 Statutory Penalty**: Defaulting buyers must pay **compound interest with monthly rests at 3 times the RBI Bank Rate**.',
+        '- **Dispute Resolution**: Fast-track summary arbitration through the MSME Samadhaan Facilitation Council in Pune without filing a civil suit.',
+      ].join('\n'),
+      spokenText: 'Under the MSMED Act, buyers are legally required to pay your registered brewery within 45 days. Delays incur statutory compound interest at three times the RBI bank rate, enforceable through MSME Samadhaan.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'schemes', label: 'View Udyam Benefits' }],
+    };
+  }
+
+  // 33. Joint Site Inspection Protocol (MPCB + Fire Department)
+  if (/inspection|joint inspection|auditor|site visit|who inspects|when inspection|inspection notice/.test(q)) {
+    return {
+      reply: [
+        '### 🔍 Joint Site Inspection Protocol (MPCB + Fire Services)',
+        '',
+        '- **Ease of Doing Business Mandate**: Uncoordinated single-officer surprise visits are abolished under Maharashtra industrial reform guidelines.',
+        '- **Synchronization**: MPCB Sub-Regional Officer and MIDC Fire Services conduct a **single synchronized Joint Inspection within 14 calendar days** of CTE submission.',
+        '- **Advance Notice**: Applicant receives minimum **48 hours advance notice** via SMS and registered email.',
+        '- **Report Submission**: Combined joint inspection report must be uploaded to the MAITRI portal within 48 hours of inspection.',
+      ].join('\n'),
+      spokenText: 'MPCB and MIDC Fire Services conduct a single synchronized Joint Site Inspection within 14 days of CTE submission, with 48 hours advance digital notice and a mandatory 48-hour report upload window.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'inspections', label: 'View Inspection Desk' }],
+    };
+  }
+
+  // 34. MIDC Chakan Industrial Cluster & Location Details
+  if (/chakan|midc chakan|location|industrial area|industrial zone|shed|phase 2|pune location/.test(q)) {
+    return {
+      reply: [
+        '### 📍 MIDC Chakan Industrial Cluster (Phase II, Pune)',
+        '',
+        '- **Location**: Plot in MIDC Chakan Phase II, Taluka Khed, District Pune, Maharashtra.',
+        '- **Facility**: 6,000 sq.ft. leased industrial shed within an approved industrial park.',
+        '- **Cluster Advantages**:',
+        '  - Industrial zoning pre-approved for Orange category manufacturing (no agricultural NA conversion needed).',
+        '  - Direct connection to MIDC piped industrial water network and 22 kV industrial power substation.',
+        '  - Seamless freight connectivity via Pune-Nashik Highway (NH-60) and Mumbai-Pune Expressway.',
+      ].join('\n'),
+      spokenText: 'Pune Craft Brewery is located in a 6,000 square foot shed in MIDC Chakan Phase II, Pune. The industrial park provides pre-approved industrial zoning, reliable water and power grids, and direct expressway logistics.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'profile', label: 'View Location Profile' }],
+    };
+  }
+
+  // 35. Workforce, Working Hours & Maharashtra Factory Rules
+  if (/workers|labour|labor|employee|shifts|working hours|safety officer|pf|esic|canteen|factory rules/.test(q)) {
+    return {
+      reply: [
+        '### 👥 Workforce & Maharashtra Factory Rules Compliance',
+        '',
+        '- **Personnel**: 25 full-time staff (18 brewing & packaging operations, 7 administration & sales).',
+        '- **Statutory Work Limits (Factories Act 1948)**:',
+        '  - Maximum 48 working hours per week, 9 hours per day with a mandatory 30-minute rest interval.',
+        '  - Overtime compensated at double the normal wage rate.',
+        '- **Safety & Welfare Mandates**:',
+        '  - First Aid box with certified first-aider on every operating shift.',
+        '  - Statutory EPF and ESIC registration.',
+        '  - Dedicated staff changing rooms, lockers, and emergency eye-wash stations near chemical storage.',
+      ].join('\n'),
+      spokenText: 'Your brewery employs 25 personnel governed by the Factories Act. Requirements include a maximum 48-hour work week, certified first-aiders on every shift, EPF and ESIC registrations, and emergency eye-wash facilities.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'profile', label: 'View Profile Staffing' }],
+    };
+  }
+
+  // 36. Statutory Fee Schedule & Cost Forecast
+  if (/cost|fee|budget|expense|charges|how much fee|statutory cost|government fee/.test(q)) {
+    return {
+      reply: [
+        '### 💳 Official Government Fee Schedule Breakdown',
+        '',
+        '- **MPCB Consent to Establish (CTE)**: ₹50,000 – ₹75,000 (based on capital investment slab).',
+        '- **State Excise Brewery Licence (BRL-001)**: ₹1,00,000 annual fee + ₹50,000 security deposit.',
+        '- **Provisional Fire NOC**: ₹25,000.',
+        '- **DISH Building Plan Approval**: ₹15,000.',
+        '- **FSSAI Central License**: ₹7,500.',
+        '- **Legal Metrology LMPC Registration**: ₹5,000.',
+        '- **Total Projected Statutory Fees**: **₹1,85,000 to ₹2,40,000**.',
+      ].join('\n'),
+      spokenText: 'Projected official statutory government fees total ₹1,85,000 to ₹2,40,000. Key components include one lakh rupees for the Excise licence, fifty to seventy-five thousand for MPCB CTE, and twenty-five thousand for Fire NOC.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'time-cost', label: 'Open Cost Forecast' }],
+    };
+  }
+
+  // 37. What is ApprovalIQ & Platform Overview
+  if (/what is approvaliq|platform|how does.*work|about approvaliq|approvaliq overview/.test(q)) {
+    return {
+      reply: [
+        '### 🚀 ApprovalIQ — Industrial Clearance Intelligence Platform',
+        '',
+        'ApprovalIQ transforms complex Indian industrial compliance into a clear, predictable workflow:',
+        '- **Dynamic Clearances DAG**: Automatically maps prerequisite dependencies across MPCB, State Excise, DISH, Fire Services, and FSSAI.',
+        '- **Statutory RTS SLA Tracking**: Tracks government deadlines under the Maharashtra Right to Services Act with deemed approval alerts.',
+        '- **Fiscal Scheme Matching**: Matches eligible central/state subsidies (CGTMSE ₹5 Cr, EPCG 0%, Section 80-IAC).',
+        '- **Approve Voice Copilot**: Intelligent grounded voice and chat copilot with full case visibility.',
+      ].join('\n'),
+      spokenText: 'ApprovalIQ is India\'s industrial single-window clearance intelligence platform. We map statutory approvals, enforce Maharashtra Right to Services SLAs, match eligible government subsidies, and guide you every step through your compliance roadmap.',
+      mode: 'offline',
+      actions: [{ type: 'navigate', target: 'roadmap', label: 'Explore Roadmap' }],
+    };
+  }
+
+  // 38. Dynamic Contextual Reasoning Synthesizer (The Ultimate Anti-Generic Fallback)
+  return synthesizeDynamicReasoning(message, _projectId);
+}
+
+/**
+ * Public client-side assistant entry point. Attempts live LLM call if configured,
+ * otherwise provides deep statutory synthesis.
+ */
+export async function generateApproveClientAnswer(
+  message: string,
+  _projectId: string = DEMO_PROJECT_ID,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+): Promise<AssistantChatResponse> {
+  const liveResult = await tryLiveLlmAnswer(message, history);
+  if (liveResult) return liveResult;
+
+  return synthesizeStatutoryAnswer(message, _projectId);
 }
 
 export function getOfflineAssistantChat(
   projectId: string,
   message: string,
-): AssistantChatResponse {
+): Promise<AssistantChatResponse> | AssistantChatResponse {
   return generateApproveClientAnswer(message, projectId);
 }
 
-export function getOfflineGeneralChat(message: string): AssistantChatResponse {
-  const q = message.toLowerCase();
-
-  if (/what is approvaliq|explain|overview|how does.*work|about/.test(q)) {
-    return {
-      reply: "ApprovalIQ is India's industrial single-window clearance intelligence platform. We evaluate your business parameters, map out a clear dependency roadmap of statutory clearances, and match you with eligible government schemes and subsidies.",
-      spokenText: "ApprovalIQ is India's industrial single-window clearance intelligence platform. We evaluate your business parameters, map out a clear dependency roadmap of statutory clearances, and match you with eligible government schemes and subsidies.",
-      mode: 'offline',
-      actions: [{ type: 'navigate', target: 'roadmap', label: 'Explore Platform' }],
-    };
-  }
-
-  if (/scheme|incentive|subsidy|subsidies|grant|cgtmse|epcg|tax holiday|zed/.test(q)) {
-    return {
-      reply: 'ApprovalIQ checks your eligibility for top state and central schemes, including ₹5 Crore CGTMSE collateral-free financing, 0% export customs duty under EPCG, Section 80-IAC tax holidays, and MSME ZED green certification subsidies.',
-      spokenText: 'ApprovalIQ checks your eligibility for top state and central schemes, including ₹5 Crore CGTMSE collateral-free financing, 0% export customs duty under EPCG, Section 80-IAC tax holidays, and MSME ZED green certification subsidies.',
-      mode: 'offline',
-      actions: [{ type: 'navigate', target: 'schemes', label: 'View Schemes' }],
-    };
-  }
-
+export function getOfflineGeneralChat(message: string): Promise<AssistantChatResponse> | AssistantChatResponse {
   return generateApproveClientAnswer(message, DEMO_PROJECT_ID);
 }
+

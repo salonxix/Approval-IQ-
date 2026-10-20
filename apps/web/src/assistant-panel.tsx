@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Bot, X, SendHorizonal, Sparkles } from 'lucide-react';
-import { get, post } from './api-client';
+import { assistantApi } from './api-client';
+import { DEMO_PROJECT_ID, generateApproveClientAnswer } from './demo-data';
 import { useAuth } from './auth';
 
 /**
@@ -20,7 +21,7 @@ interface ChatMsg {
   content: string;
 }
 
-const PROJECT_ID_RE = /^\/projects\/([0-9a-fA-F-]{36})(\/|$)/;
+const PROJECT_ID_RE = /^\/projects\/([a-zA-Z0-9_-]+)(\/|$)/;
 
 /** Quick-start questions tailored to what the snapshot can answer. */
 const SUGGESTIONS = [
@@ -31,10 +32,11 @@ const SUGGESTIONS = [
 ];
 
 export function AssistantPanel(): JSX.Element {
-  const { accessToken, isAuthenticated } = useAuth();
+  const { accessToken } = useAuth();
   const location = useLocation();
   const match = PROJECT_ID_RE.exec(location.pathname);
   const projectId = match?.[1] ?? null;
+  const activeProjectId = projectId || DEMO_PROJECT_ID;
 
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'llm' | 'offline' | null>(null);
@@ -48,7 +50,7 @@ export function AssistantPanel(): JSX.Element {
   // Reset per-project transcript so each project chats from a clean slate.
   useEffect(() => {
     setError(null);
-  }, [projectId]);
+  }, [activeProjectId]);
 
   useEffect(() => {
     if (open) scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -56,99 +58,46 @@ export function AssistantPanel(): JSX.Element {
 
   useEffect(() => {
     if (!open || mode !== null) return;
-    get<{ mode: 'llm' | 'offline' }>('/assistant/status', { token: accessToken ?? '' })
+    assistantApi
+      .getStatus(accessToken ?? '')
       .then((r) => setMode(r.mode))
       .catch(() => setMode('offline'));
   }, [open, mode, accessToken]);
 
   const send = async (text: string): Promise<void> => {
     const message = text.trim();
-    if (!message || !projectId || busy) return;
-    const history = messages[projectId] ?? [];
-    setMessages((m) => ({ ...m, [projectId]: [...history, { role: 'user', content: message }] }));
+    if (!message || busy) return;
+    const history = messages[activeProjectId] ?? [];
+    setMessages((m) => ({ ...m, [activeProjectId]: [...history, { role: 'user', content: message }] }));
     setInput('');
     setBusy(true);
     setError(null);
     try {
-      const res = await post<{ reply: string; mode: 'llm' | 'offline' }>(
-        `/assistant/projects/${projectId}/chat`,
-        { message, history: history.slice(-8) },
-        { token: accessToken ?? '' },
-      );
+      let res: { reply: string; mode: 'llm' | 'offline' };
+      try {
+        res = await assistantApi.chatTurn(activeProjectId, message, history.slice(-8), accessToken ?? '');
+      } catch {
+        res = await generateApproveClientAnswer(message, activeProjectId, history.slice(-8));
+      }
       setMode(res.mode);
       setMessages((m) => ({
         ...m,
-        [projectId]: [...(m[projectId] ?? []), { role: 'assistant', content: res.reply }],
+        [activeProjectId]: [...(m[activeProjectId] ?? []), { role: 'assistant', content: res.reply }],
       }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'The assistant is unavailable right now.');
+    } catch {
+      const fallback = await generateApproveClientAnswer(message, activeProjectId);
+      setMode('offline');
+      setMessages((m) => ({
+        ...m,
+        [activeProjectId]: [...(m[activeProjectId] ?? []), { role: 'assistant', content: fallback.reply }],
+      }));
     } finally {
       setBusy(false);
       inputRef.current?.focus();
     }
   };
 
-  // Pages without a project context (home page, marketing pages, BI pages, regulatory changes…)
-  // get a compact launcher that routes users into a project first.
-  if (!projectId) {
-    return (
-      <>
-        {open && (
-          <div className="fixed bottom-24 right-5 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="inline-flex items-center gap-2 text-sm font-black text-slate-800">
-                <Bot className="h-4 w-4 text-blue-600" /> ApprovalIQ Assistant
-              </span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close assistant">
-                <X className="h-4 w-4 text-slate-400 hover:text-slate-600" />
-              </button>
-            </div>
-            <p className="mt-3 text-xs leading-relaxed text-slate-600">
-              The AI assistant provides grounded answers from your active project snapshot (business profile, Central &amp; State approvals, estimated timelines, costs, and statutory documents).
-            </p>
-            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/projects"
-                  onClick={() => setOpen(false)}
-                  className="w-full text-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors inline-flex items-center justify-center gap-1.5"
-                >
-                  Open Your Projects →
-                </Link>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to="/login"
-                    onClick={() => setOpen(false)}
-                    className="flex-1 text-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    to="/register"
-                    onClick={() => setOpen(false)}
-                    className="flex-1 text-center rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition-colors"
-                  >
-                    Get Started
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-label={open ? 'Hide assistant' : 'Open assistant'}
-          className="fixed bottom-5 right-5 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors"
-        >
-          {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
-        </button>
-      </>
-    );
-  }
-
-  const convo = messages[projectId] ?? [];
+  const convo = messages[activeProjectId] ?? [];
 
   return (
     <>
