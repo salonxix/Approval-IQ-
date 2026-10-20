@@ -60,39 +60,41 @@ export function VoiceProvider({ children }: VoiceProviderProps): JSX.Element {
       .then((projects) => {
         if (Array.isArray(projects) && projects.length > 0 && projects[0]?.id) {
           setFallbackProjectId(projects[0].id);
+        } else {
+          setFallbackProjectId('biz-demo-pune-brewery');
         }
       })
       .catch(() => {
-        // Ignore fallback resolution failure
+        setFallbackProjectId('biz-demo-pune-brewery');
       });
   }, [isAuthenticated, accessToken, fallbackProjectId]);
 
   const handleAction = (action: VoiceAction) => {
-    const projId = activeProjectId || 'd61fc91a-a194-48b5-baaa-cec694170359';
+    const projId = activeProjectId || fallbackProjectId || 'biz-demo-pune-brewery';
     switch (action.target) {
       case 'roadmap':
-        navigate(activeProjectId ? `/projects/${projId}/roadmap` : '/projects');
+        navigate(`/projects/${projId}/roadmap`);
         break;
       case 'schemes':
-        navigate(activeProjectId ? `/projects/${projId}/schemes` : '/projects');
+        navigate(`/projects/${projId}/schemes`);
         break;
       case 'profile':
-        navigate(activeProjectId ? `/projects/${projId}/profile` : '/projects');
+        navigate(`/projects/${projId}/profile`);
         break;
       case 'vault':
-        navigate(activeProjectId ? `/projects/${projId}/roadmap` : '/projects');
+        navigate(`/projects/${projId}/roadmap`);
         break;
       case 'time-cost':
-        navigate(activeProjectId ? `/projects/${projId}/bi/time-cost` : '/time-cost-prediction');
+        navigate('/time-cost-prediction');
         break;
       case 'inspections':
-        navigate(activeProjectId ? `/projects/${projId}/roadmap` : '/projects');
+        navigate(`/projects/${projId}/inspections`);
         break;
       case 'grievances':
-        navigate(activeProjectId ? `/projects/${projId}/roadmap` : '/projects');
+        navigate(`/projects/${projId}/grievances`);
         break;
       default:
-        navigate(activeProjectId ? `/projects/${projId}/roadmap` : '/projects');
+        navigate(`/projects/${projId}/roadmap`);
     }
   };
 

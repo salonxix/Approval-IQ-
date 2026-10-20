@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SpeechRecognitionSupport, VoiceAction, VoiceControllerOptions, VoiceError, VoiceMessage, VoiceState } from './voiceTypes';
 import { cleanForSpeech, isDone, isSelfSpeechEcho, pickFemaleVoice, truncateToWords } from './voiceUtils';
 import { assistantApi } from '../api-client';
+import { generateApproveClientAnswer } from '../demo-data';
 
 const GREETING = "Hey, I'm Approve. How do you want me to help you?";
 const CLOSING_FAREWELL = "Happy to help with your approvals! Have a great day.";
@@ -236,8 +237,12 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
         }
       }
 
-      const reply = res?.reply || res?.spokenText || "I'm Approve, your voice copilot. I can help navigate your compliance roadmap, inspect required documents, or check government schemes and subsidies.";
-      const spoken = res?.spokenText || reply;
+      if (!res) {
+        res = generateApproveClientAnswer(text, targetProjectId);
+      }
+
+      const reply = res.reply || res.spokenText || "I'm Approve, your voice copilot. I can help navigate your compliance roadmap, inspect required documents, or check government schemes and subsidies.";
+      const spoken = res.spokenText || reply;
 
       const assistantMsg: VoiceMessage = {
         id: crypto.randomUUID?.() || String(Date.now()),

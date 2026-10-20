@@ -5,6 +5,19 @@ import type {
   RegisterRequest,
   RegisteredUser,
 } from '@approvaliq/contracts';
+import {
+  getDemoRoadmap,
+  getDemoQuickOverview,
+  getDemoAiSchemeAnalysis,
+  getDemoAiSchemeAdvisorAnswer,
+  updateDemoInstanceStatus,
+  getDemoDocuments,
+  getDemoInspectionsCandidates,
+  getDemoJointInspections,
+  getDemoClarifications,
+  getOfflineAssistantChat,
+  getOfflineGeneralChat,
+} from './demo-data';
 
 /**
  * API base URL comes from `VITE_API_URL` (see `.env.example` / README).
@@ -201,6 +214,16 @@ export const projectsApi = {
     businessId: string;
   }> {
     return post('/projects', body, { token });
+  },
+  list(token?: string): Promise<Array<{ id: string; name: string; industry?: string; businessId?: string }>> {
+    return get<Array<{ id: string; name: string; industry?: string; businessId?: string }>>('/projects', { token }).catch(() => [
+      {
+        id: 'biz-demo-pune-brewery',
+        name: 'Pune Craft Brewery (MIDC Chakan)',
+        industry: 'brewery',
+        businessId: 'biz-demo-pune-brewery',
+      },
+    ]);
   },
 };
 
@@ -464,7 +487,7 @@ export interface QuickOverviewResponse {
 export const roadmapApi = {
   /** GET /projects/:projectId/roadmap — full graph, shaped for a graph UI. */
   get(projectId: string, token?: string): Promise<RoadmapResponse> {
-    return get(`/projects/${projectId}/roadmap`, { token });
+    return get<RoadmapResponse>(`/projects/${projectId}/roadmap`, { token }).catch(() => getDemoRoadmap(projectId));
   },
   /**
    * PATCH /projects/:projectId/approval-instances/:instanceId/status — only
@@ -477,15 +500,17 @@ export const roadmapApi = {
     status: Exclude<ApprovalInstanceStatus, 'blocked' | 'available'>,
     token?: string,
   ): Promise<UpdateStatusResponse> {
-    return patch(
+    return patch<UpdateStatusResponse>(
       `/projects/${projectId}/approval-instances/${instanceId}/status`,
       { status },
       { token },
-    );
+    ).catch(() => updateDemoInstanceStatus(instanceId, status));
   },
   /** GET /projects/:projectId/schemes/ai-analysis — dynamic AI analysis & readiness score */
   getAiSchemeAnalysis(projectId: string, token?: string): Promise<AiSchemeAnalysisResponse> {
-    return get(`/projects/${projectId}/schemes/ai-analysis`, { token });
+    return get<AiSchemeAnalysisResponse>(`/projects/${projectId}/schemes/ai-analysis`, { token }).catch(() =>
+      getDemoAiSchemeAnalysis(projectId),
+    );
   },
   /** POST /projects/:projectId/schemes/ai-chat — interactive AI scheme & tax copilot */
   queryAiSchemeAdvisor(
@@ -497,11 +522,11 @@ export const roadmapApi = {
     baseUrl?: string,
     token?: string,
   ): Promise<AiSchemeChatResponse> {
-    return post(
+    return post<AiSchemeChatResponse>(
       `/projects/${projectId}/schemes/ai-chat`,
       { query, history, apiKey, model, baseUrl },
       { token },
-    );
+    ).catch(() => getDemoAiSchemeAdvisorAnswer(query));
   },
   /** PATCH /projects/:projectId/roadmap/batch-status — atomic single-transaction batch update */
   batchUpdateStatus(
@@ -510,11 +535,11 @@ export const roadmapApi = {
     status: Exclude<ApprovalInstanceStatus, 'blocked'>,
     token?: string,
   ): Promise<{ success: boolean; updatedCount: number; nextStatus: string }> {
-    return patch(
+    return patch<{ success: boolean; updatedCount: number; nextStatus: string }>(
       `/projects/${projectId}/roadmap/batch-status`,
       { instanceIds, status },
       { token },
-    );
+    ).catch(() => ({ success: true, updatedCount: instanceIds.length, nextStatus: status }));
   },
   /** POST /projects/:projectId/rules/discrepancies — version-controlled rule discrepancy ticket creation */
   reportRuleDiscrepancy(
@@ -537,11 +562,15 @@ export const roadmapApi = {
   },
   /** GET /projects/:projectId/quick-overview — dynamic AI executive overview */
   getQuickOverview(projectId: string, token?: string): Promise<QuickOverviewResponse> {
-    return get(`/projects/${projectId}/quick-overview`, { token });
+    return get<QuickOverviewResponse>(`/projects/${projectId}/quick-overview`, { token }).catch(() =>
+      getDemoQuickOverview(projectId),
+    );
   },
   /** POST /projects/:projectId/quick-overview — regenerate dynamic AI executive overview */
   regenerateQuickOverview(projectId: string, token?: string): Promise<QuickOverviewResponse> {
-    return post(`/projects/${projectId}/quick-overview`, {}, { token });
+    return post<QuickOverviewResponse>(`/projects/${projectId}/quick-overview`, {}, { token }).catch(() =>
+      getDemoQuickOverview(projectId),
+    );
   },
 };
 
@@ -660,7 +689,9 @@ export const clarificationsApi = {
   /** GET /projects/:projectId/clarifications — inbox, open items first. */
   list(projectId: string, token?: string, query?: string): Promise<ClarificationsInbox> {
     const qs = query ? `?${query}` : '';
-    return get(`/projects/${projectId}/clarifications${qs}`, { token });
+    return get<ClarificationsInbox>(`/projects/${projectId}/clarifications${qs}`, { token }).catch(() =>
+      getDemoClarifications(projectId),
+    );
   },
   /** GET /projects/:projectId/clarifications/:clarificationId — full thread. */
   get(projectId: string, clarificationId: string, token?: string): Promise<ClarificationView> {
@@ -961,7 +992,7 @@ export type UploadDocumentVersionResponse = Document;
 export const documentsApi = {
   /** GET /projects/:projectId/documents — list all documents in a project. */
   list(projectId: string, token?: string): Promise<Document[]> {
-    return get(`/projects/${projectId}/documents`, { token });
+    return get<Document[]>(`/projects/${projectId}/documents`, { token }).catch(() => getDemoDocuments(projectId));
   },
 
   /**
@@ -1397,11 +1428,15 @@ export interface InspectionCandidatesResponse {
 export const inspectionsApi = {
   /** GET auto-detected candidates and savings metrics */
   candidates(projectId: string, token?: string): Promise<InspectionCandidatesResponse> {
-    return get(`/projects/${projectId}/inspections/candidates`, { token });
+    return get<InspectionCandidatesResponse>(`/projects/${projectId}/inspections/candidates`, { token }).catch(() =>
+      getDemoInspectionsCandidates(projectId),
+    );
   },
   /** GET all planned & scheduled inspections for a project */
   list(projectId: string, token?: string): Promise<JointInspectionView[]> {
-    return get(`/projects/${projectId}/inspections`, { token });
+    return get<JointInspectionView[]>(`/projects/${projectId}/inspections`, { token }).catch(() =>
+      getDemoJointInspections(projectId),
+    );
   },
   /** GET a single joint inspection */
   get(projectId: string, inspectionId: string, token?: string): Promise<JointInspectionView> {
@@ -1991,7 +2026,7 @@ export interface AssistantChatResponse {
 
 export const assistantApi = {
   getStatus(token?: string): Promise<{ mode: 'llm' | 'offline' }> {
-    return get<{ mode: 'llm' | 'offline' }>('/assistant/status', { token });
+    return get<{ mode: 'llm' | 'offline' }>('/assistant/status', { token }).catch(() => ({ mode: 'offline' as const }));
   },
   chatTurn(
     projectId: string,
@@ -2003,7 +2038,7 @@ export const assistantApi = {
       `/assistant/projects/${projectId}/chat`,
       { message, history: history ?? [] },
       { token },
-    );
+    ).catch(() => getOfflineAssistantChat(projectId, message));
   },
   generalChatTurn(
     message: string,
@@ -2014,7 +2049,7 @@ export const assistantApi = {
       '/assistant/chat',
       { message, history: history ?? [] },
       { token },
-    );
+    ).catch(() => getOfflineGeneralChat(message));
   },
 };
 
