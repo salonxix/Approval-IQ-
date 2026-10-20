@@ -244,5 +244,4 @@ pnpm ci:check
 
 ## Author & Acknowledgements
 
-- **Developer:** [Shreya Sherikar](https://github.com/shreysherikar)
-- **LinkedIn:** [linkedin.com/in/shreya-sherikar](https://linkedin.com/in/shreya-sherikar)
+- **Developer:** Team cipher
