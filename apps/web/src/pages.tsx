@@ -266,7 +266,13 @@ export function LoginPage(): JSX.Element {
         void navigate('/projects');
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Invalid credentials provided. Please check your email and password.');
+      if (err instanceof ApiError && err.status === 401) {
+        setError('Invalid credentials provided. Please check your email and password.');
+      } else if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('API server is currently unreachable. Click the Quick Demo Credentials above to log in immediately.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -333,13 +339,13 @@ export function LoginPage(): JSX.Element {
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => fillCredentials('saloni1005@gmail.com', 'Saloni@123')}
+                onClick={() => fillCredentials('applicant@approvaliq.dev', 'Password123!')}
                 className="px-2.5 py-1.5 rounded-lg bg-white border border-amber-300 hover:border-amber-500 hover:bg-amber-100/50 text-left transition-all cursor-pointer shadow-sm"
               >
                 <div className="font-bold text-slate-900 text-[11px] flex items-center gap-1">
                   <span>🏢 Applicant</span>
                 </div>
-                <div className="font-mono text-[9px] text-slate-500 truncate">saloni1005@gmail.com</div>
+                <div className="font-mono text-[9px] text-slate-500 truncate">applicant@approvaliq.dev</div>
               </button>
               <button
                 type="button"

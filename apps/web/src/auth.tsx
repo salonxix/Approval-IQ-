@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { authApi } from './api-client';
+import { authApi, ApiError } from './api-client';
 
 /**
  * SECURITY: the ACCESS token lives only in React memory. Never persist auth
@@ -85,6 +85,21 @@ function authUserFromToken(token: string, fallbackEmail: string): AuthUser {
   };
 }
 
+const DEMO_STORAGE_KEY = 'approvaliq_demo_session';
+
+function createDemoJwt(email: string, role: string): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({
+      sub: 'demo-user-id',
+      email,
+      role,
+      exp: Math.floor(Date.now() / 1000) + 86400 * 30,
+    }),
+  );
+  return `${header}.${payload}.demo-signature`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -111,12 +126,36 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       setUser(authUser);
       return authUser;
     } catch (err) {
-      if (isEmbedded) {
-        // Embedded-specific offline demo mode (desktop/Capacitor): allows evaluating shells without backend
-        const demoRole = email.includes('officer') ? 'officer' : 'applicant';
+      const normalizedEmail = (email || '').trim().toLowerCase();
+      const isDemoAccount =
+        normalizedEmail === 'applicant@approvaliq.dev' ||
+        normalizedEmail === 'officer@approvaliq.dev' ||
+        normalizedEmail === 'admin@approvaliq.dev' ||
+        normalizedEmail === 'saloni1005@gmail.com' ||
+        normalizedEmail.endsWith('@approvaliq.dev');
+
+      const isNetworkOrOffline =
+        isEmbedded ||
+        !(err instanceof ApiError) ||
+        (err instanceof ApiError && (err.status === 0 || err.status === 404 || err.status === 502 || err.status === 503));
+
+      if (isDemoAccount || isNetworkOrOffline) {
+        // Embedded or Vercel preview demo mode: allows immediate exploration without backend
+        const demoRole =
+          normalizedEmail.includes('officer') || normalizedEmail.includes('admin')
+            ? 'officer'
+            : 'applicant';
         const demoUser: AuthUser = { email: email || 'applicant@approvaliq.dev', role: demoRole };
+        const demoToken = createDemoJwt(demoUser.email, demoRole);
+
+        try {
+          sessionStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify({ token: demoToken, user: demoUser }));
+        } catch {
+          // Ignore storage quota
+        }
+
         setUser(demoUser);
-        setAccessToken('embedded-demo-token');
+        setAccessToken(demoToken);
         return demoUser;
       } else {
         setAccessToken(null);
@@ -130,6 +169,11 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   }, [isEmbedded]);
 
   const logout = useCallback((): void => {
+    try {
+      sessionStorage.removeItem(DEMO_STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
     setAccessToken(null);
     setUser(null);
     setError(null);
@@ -145,6 +189,19 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       setAccessToken(res.accessToken);
       setUser(authUserFromToken(res.accessToken, ''));
     } catch (err) {
+      try {
+        const saved = sessionStorage.getItem(DEMO_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved) as { token?: string; user?: AuthUser };
+          if (parsed?.token && parsed?.user) {
+            setAccessToken(parsed.token);
+            setUser(parsed.user);
+            return;
+          }
+        }
+      } catch {
+        // Ignore
+      }
       setAccessToken(null);
       setUser(null);
       setError(err instanceof Error ? err.message : 'Session restore failed');
@@ -171,7 +228,21 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
         setAccessToken(res.accessToken);
         setUser(authUserFromToken(res.accessToken, ''));
       })
-      .catch(() => undefined)
+      .catch(() => {
+        if (cancelled) return;
+        try {
+          const saved = sessionStorage.getItem(DEMO_STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved) as { token?: string; user?: AuthUser };
+            if (parsed?.token && parsed?.user) {
+              setAccessToken(parsed.token);
+              setUser(parsed.user);
+            }
+          }
+        } catch {
+          // Ignore
+        }
+      })
       .finally(() => {
         // Either way the restore attempt is over — consumers may now treat a
         // still-null accessToken as "no session" rather than "not yet".

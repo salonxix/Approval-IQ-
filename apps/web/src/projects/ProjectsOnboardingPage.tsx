@@ -147,13 +147,23 @@ export interface ProjectHistoryItem {
 
 const STORAGE_PROJECTS_KEY = 'approvaliq_founder_case_files_v1';
 
+const DEFAULT_DEMO_PROJECT: ProjectHistoryItem = {
+  id: 'biz-demo-pune-brewery',
+  name: 'Pune Craft Brewery (MIDC Chakan)',
+  industry: 'Brewery & Distilleries',
+  state: 'Maharashtra',
+  district: 'Pune',
+  createdAt: 'Demo Case File',
+};
+
 export function getStoredProjects(): ProjectHistoryItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_PROJECTS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as ProjectHistoryItem[];
+    if (!raw) return [DEFAULT_DEMO_PROJECT];
+    const parsed = JSON.parse(raw) as ProjectHistoryItem[];
+    return parsed.length > 0 ? parsed : [DEFAULT_DEMO_PROJECT];
   } catch {
-    return [];
+    return [DEFAULT_DEMO_PROJECT];
   }
 }
 
@@ -293,6 +303,24 @@ export const ProjectsOnboardingPage: React.FC = () => {
       }, 700);
 
     } catch (err) {
+      if (!(err instanceof ApiError) || (err instanceof ApiError && err.status === 0)) {
+        // Graceful offline fallback for static / preview deployments
+        const fallbackId = 'biz-demo-pune-brewery';
+        saveStoredProject({
+          id: fallbackId,
+          name: projectName.trim() || 'Pune Craft Brewery',
+          industry: selectedIndustry.name,
+          state: stateInfo.name,
+          district: selectedDistrict,
+          createdAt: new Date().toLocaleDateString(),
+        });
+        clearInterval(stepInterval);
+        setAnalysisStep(ANALYSIS_STEPS.length);
+        setTimeout(() => {
+          void navigate(`/projects/${fallbackId}/roadmap`);
+        }, 700);
+        return;
+      }
       clearInterval(stepInterval);
       setIsAnalyzing(false);
       setError(err instanceof ApiError ? err.message : 'Could not initialize project analysis. Please try again.');
