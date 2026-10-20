@@ -17,6 +17,8 @@ jobs:
   deploy:
     name: Build and Push API
     runs-on: ubuntu-latest
+    # Only run AWS production deployment on the upstream repo where AWS OIDC & secrets are provisioned
+    if: github.repository == 'shreysherikar/Approval-IQ'
 
     steps:
       - name: Checkout
