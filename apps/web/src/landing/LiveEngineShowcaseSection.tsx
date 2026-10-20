@@ -71,7 +71,7 @@ export const LiveEngineShowcaseSection: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2 p-2.5 rounded-xl bg-ocean-900/80 border border-ocean-800/80 hover:border-ocean-600 transition-colors">
                   <Key className="w-3 h-3 text-forest-400 shrink-0" />
-                  <span>{t('engine.oauth', 'Google OAuth 2.0')}</span>
+                  <span>{t('engine.oauth', 'JWT & RBAC Security')}</span>
                 </div>
               </div>
             </div>

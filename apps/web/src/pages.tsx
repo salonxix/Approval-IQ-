@@ -16,15 +16,8 @@ import { ApiError, authApi } from './api-client';
 import { useAuth } from './auth';
 import { useLanguage } from './i18n';
 import { LanguageSwitcher } from './Layout';
-import { ErrorBanner, GoogleSignInButton } from './components';
+import { ErrorBanner } from './components';
 import { LandingPage } from './landing/LandingPage';
-
-const isEmbedded =
-  typeof window !== 'undefined' &&
-  ('__TAURI_INTERNALS__' in window ||
-    'Capacitor' in window ||
-    import.meta.env.VITE_DESKTOP === 'true' ||
-    import.meta.env.VITE_MOBILE === 'true');
 
 export function HomePage(): JSX.Element {
   return <LandingPage />;
@@ -361,20 +354,7 @@ export function LoginPage(): JSX.Element {
             </div>
           </div>
 
-          {!isEmbedded && (
-            <>
-              <div className="pt-1">
-                <GoogleSignInButton label="Sign in with Google" disabled={isLoading} />
-              </div>
 
-              <div className="relative flex items-center justify-center my-2">
-                <div className="w-full border-t border-ocean-200" />
-                <span className="bg-canvas px-2.5 text-[10px] uppercase tracking-wider text-ocean-600 font-bold font-mono absolute">
-                  or work credentials
-                </span>
-              </div>
-            </>
-          )}
 
           {/* Email & Password Form */}
           <form onSubmit={(e) => void submit(e)} className="space-y-3.5">
@@ -522,20 +502,7 @@ export function RegisterPage(): JSX.Element {
 
           {error && <ErrorBanner message={error} />}
 
-          {!isEmbedded && (
-            <>
-              <div className="pt-1">
-                <GoogleSignInButton label="Register with Google" disabled={isLoading} />
-              </div>
 
-              <div className="relative flex items-center justify-center my-3">
-                <div className="w-full border-t border-ocean-200" />
-                <span className="bg-canvas px-2.5 text-[10px] uppercase tracking-wider text-ocean-600 font-bold font-mono absolute">
-                  or work email
-                </span>
-              </div>
-            </>
-          )}
 
           {/* Registration Form */}
           <form onSubmit={(e) => void submit(e)} className="space-y-3.5">

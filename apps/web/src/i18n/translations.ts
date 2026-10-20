@@ -488,7 +488,7 @@ export const translations = {
     'engine.rbac': 'Role-Based RBAC',
     'engine.aes': 'AES-256 Storage',
     'engine.audit': 'Audit Immutability',
-    'engine.oauth': 'Google OAuth 2.0',
+    'engine.oauth': 'JWT & RBAC Security',
 
     // Document to Decision Flow
     'flow.lifecycle_title': 'Document → Decision Lifecycle',
@@ -1172,7 +1172,7 @@ export const translations = {
     'engine.rbac': 'भूमिका-आधारित प्रवेश (RBAC)',
     'engine.aes': 'AES-256 सुरक्षित साठवण',
     'engine.audit': 'अपरिवर्तनीय ऑडिट ट्रेल',
-    'engine.oauth': 'Google OAuth 2.0 सुरक्षित प्रमाणीकरण',
+    'engine.oauth': 'सुरक्षित JWT आणि RBAC प्रमाणीकरण',
 
     // Document to Decision Flow
     'flow.lifecycle_title': 'कागदपत्र ते वैधानिक निर्णय चक्र',

@@ -87,7 +87,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
       id: 'signin',
       category: 'Authentication',
       title: 'Sign In to ApprovalIQ Workspace',
-      subtitle: 'Continue with Google OAuth or Email',
+      subtitle: 'Sign in with work credentials or demo account',
       action: () => {
         onClose();
         void navigate('/login');
