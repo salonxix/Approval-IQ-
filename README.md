@@ -28,6 +28,24 @@ By unifying a **deterministic regulatory rules engine**, **multimodal AI documen
 
 ---
 
+## 🚀 Live Demo & Access
+
+The web application is live and accessible on Vercel:
+- **Live URL:** [https://approval-iq-lovat.vercel.app](https://approval-iq-lovat.vercel.app)
+- **Sign In Desk:** [https://approval-iq-lovat.vercel.app/login](https://approval-iq-lovat.vercel.app/login)
+
+### Demo Credentials
+
+| Role / Persona | Email Address | Password | Workspace & Capabilities |
+| :--- | :--- | :--- | :--- |
+| **🏢 Industrial Applicant** | `applicant@approvaliq.dev` | `Password123!` | Pune Craft Brewery case file, prerequisite roadmaps, statutory filings, AI vault & RTS timers |
+| **🏛️ Regulatory Officer** | `officer@approvaliq.dev` | `Password123!` | Regulatory scrutiny desk (MPCB, DISH, Fire, Excise), clarification inquiry threads & joint inspections |
+| **⚡ System Administrator** | `admin@approvaliq.dev` | `Password123!` | Full statutory regulatory knowledge base, policy graph & governance controls |
+
+> **Tip:** On the [Sign In page](https://approval-iq-lovat.vercel.app/login), you can click the **⚡ Quick Demo Credentials** buttons (`Applicant` or `Officer Desk`) for instant 1-click autofill and sign in.
+
+---
+
 ## Key Capabilities & Features
 
 ### 1. Deterministic Regulatory Compliance Engine
@@ -116,7 +134,7 @@ ApprovalIQ is engineered as a responsive, multi-platform ecosystem with shared d
 | :--- | :--- |
 | **Frontend Clients** | React 18, TypeScript 5.9, Vite, Tailwind CSS, Lucide Icons, React Router 6 |
 | **Native Shells** | Tauri 2 (Rust MSVC backend) for Windows `.exe`, Capacitor 7 for Android `.apk` |
-| **Backend API** | NestJS 10, Node.js 20 LTS, TypeScript, Fastify/Express, REST, Google OAuth 2.0 |
+| **Backend API** | NestJS 10, Node.js 20 LTS, TypeScript, Fastify/Express, REST, JWT & RBAC Security |
 | **Database & ORM** | PostgreSQL 16, Prisma ORM 6, Composite Indexing, Foreign-Key Cascades, ACID Transactions |
 | **Task Queue & Workers** | PostgreSQL-backed asynchronous `Job` queue with atomic `FOR UPDATE SKIP LOCKED` polling |
 | **AI & Document Extraction** | Anthropic Claude API (Sonnet), Structured JSON Schema validation, Mathematical Tolerance Engine |
