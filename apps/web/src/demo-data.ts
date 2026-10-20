@@ -579,7 +579,7 @@ function synthesizeStatutoryAnswer(
   }
 
   // 5. All Eligible Fiscal Schemes & Subsidies
-  if (/\b(what.*scheme|eligible.*scheme|which.*scheme|what.*subsid|list.*scheme|government subsid|all schemes|financial incentive|fiscal benefit|financial support|show.*scheme)\b/i.test(q)) {
+  if (/\b(scheme|schemes|subsid(y|ies)|incentive|incentives|grant|grants)\b/i.test(q)) {
     return {
       reply: [
         `### 💰 Eligible Government Schemes & Fiscal Incentives for ${project.name}`,
@@ -702,7 +702,7 @@ function synthesizeStatutoryAnswer(
   }
 
   // 2. Project Overview & Scope
-  if (/\b(what.*is.*(the|a|my|this)?\s*project|about.*(the|a|my|this)?\s*project|project.*summary|tell me about|explain.*project|what are we building|project overview|my project|describe.*project)\b/i.test(q)) {
+  if (/\b((what\s+is|tell\s+me\s+about|explain|describe|overview\s+of)\s+(the|my|this|our)?\s*(project|facility|unit|business|brewery|enterprise)|project\s+summary|project\s+overview|about\s+(the\s+)?project)\b/i.test(q)) {
     const readyNodes = dataset.roadmap.nodes.filter(n => n.status === 'available');
     const inReviewNodes = dataset.roadmap.nodes.filter(n => n.status === 'in_progress');
     const blockedNodes = dataset.roadmap.nodes.filter(n => n.status === 'blocked');
@@ -750,7 +750,7 @@ function synthesizeStatutoryAnswer(
   }
 
   // 4. Immediate Priority Actions / What To Do Next
-  if (/pending|next|what to do|available|status|action|priority|todo|where to start|first step/.test(q)) {
+  if (/\b(what\s+to\s+do|where\s+to\s+start|what\s+should\s+i\s+do|first\s+step|priority\s+action|immediate\s+action|next\s+step|pending\s+filing|pending\s+clearance|action\s+plan|todo|to\s+do|pending\s+on\s+my\s+dashboard)\b/i.test(q)) {
     const readyNodes = dataset.roadmap.nodes.filter(n => n.status === 'available');
     return {
       reply: [
