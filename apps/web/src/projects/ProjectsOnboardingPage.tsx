@@ -136,46 +136,17 @@ const AREA_TYPE_OPTIONS = [
   { value: 'operational', label: 'Operational Commercial Floor' },
 ];
 
-export interface ProjectHistoryItem {
-  id: string;
-  name: string;
-  industry: string;
-  state: string;
-  district: string;
-  createdAt: string;
-}
+import {
+  type ProjectHistoryItem,
+  getStoredProjects,
+  saveStoredProject,
+} from '../demo-data';
 
-const STORAGE_PROJECTS_KEY = 'approvaliq_founder_case_files_v1';
-
-const DEFAULT_DEMO_PROJECT: ProjectHistoryItem = {
-  id: 'biz-demo-pune-brewery',
-  name: 'Pune Craft Brewery (MIDC Chakan)',
-  industry: 'Brewery & Distilleries',
-  state: 'Maharashtra',
-  district: 'Pune',
-  createdAt: 'Demo Case File',
+export {
+  type ProjectHistoryItem,
+  getStoredProjects,
+  saveStoredProject,
 };
-
-export function getStoredProjects(): ProjectHistoryItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_PROJECTS_KEY);
-    if (!raw) return [DEFAULT_DEMO_PROJECT];
-    const parsed = JSON.parse(raw) as ProjectHistoryItem[];
-    return parsed.length > 0 ? parsed : [DEFAULT_DEMO_PROJECT];
-  } catch {
-    return [DEFAULT_DEMO_PROJECT];
-  }
-}
-
-export function saveStoredProject(project: ProjectHistoryItem): void {
-  try {
-    const existing = getStoredProjects();
-    const updated = [project, ...existing.filter((p) => p.id !== project.id)].slice(0, 10);
-    localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(updated));
-  } catch {
-    // Ignore
-  }
-}
 
 export const ProjectsOnboardingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -269,13 +240,24 @@ export const ProjectsOnboardingPage: React.FC = () => {
         accessToken ?? undefined
       );
 
+      const investmentNum = Number(investmentInr) || 40000000;
+      const investmentFormatted = investmentNum >= 10000000
+        ? `₹${(investmentNum / 10000000).toFixed(2)} Crore`
+        : `₹${(investmentNum / 100000).toFixed(2)} Lakh`;
+
       saveStoredProject({
         id: project.id,
         name: project.name,
         industry: selectedIndustry.name,
+        industryKey: selectedIndustryId,
         state: stateInfo.name,
         district: selectedDistrict,
         createdAt: new Date().toLocaleDateString(),
+        investmentInr: investmentNum,
+        investmentFormatted,
+        areaSqft: Number(areaSqft) || 25000,
+        workforceCount: Number(employeeCount) || 80,
+        activityType: activityDescription.trim() || selectedIndustry.name,
       });
 
       const values: Record<string, KnownFieldValue> = {
@@ -285,11 +267,11 @@ export const ProjectsOnboardingPage: React.FC = () => {
         landStatus: { status: 'known', value: landStatus },
         areaSqft: { status: 'known', value: Number(areaSqft) || 25000 },
         areaType: { status: 'known', value: areaType },
-        investmentAmountInr: { status: 'known', value: Number(investmentInr) || 40000000 },
+        investmentAmountInr: { status: 'known', value: investmentNum },
         investmentDefinition: { status: 'known', value: 'total_project_cost' },
         employeeCount: { status: 'known', value: Number(employeeCount) || 80 },
         employeeCountDefinition: { status: 'known', value: 'full_operational_capacity' },
-        activityType: { status: 'known', value: activityDescription.trim() || 'beer-manufacturing' },
+        activityType: { status: 'known', value: activityDescription.trim() || selectedIndustry.name },
       };
 
       const draft = await profilesApi.createDraft(project.id, values, accessToken ?? undefined);
@@ -305,14 +287,30 @@ export const ProjectsOnboardingPage: React.FC = () => {
     } catch (err) {
       if (!(err instanceof ApiError) || (err instanceof ApiError && err.status === 0)) {
         // Graceful offline fallback for static / preview deployments
-        const fallbackId = 'biz-demo-pune-brewery';
+        const cleanSlug = projectName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+          .substring(0, 20);
+        const fallbackId = `proj-${cleanSlug || 'facility'}-${Date.now().toString(36)}`;
+        const investmentNum = Number(investmentInr) || 40000000;
+        const investmentFormatted = investmentNum >= 10000000
+          ? `₹${(investmentNum / 10000000).toFixed(2)} Crore`
+          : `₹${(investmentNum / 100000).toFixed(2)} Lakh`;
+
         saveStoredProject({
           id: fallbackId,
-          name: projectName.trim() || 'Pune Craft Brewery',
+          name: projectName.trim() || `${selectedIndustry.name} Facility`,
           industry: selectedIndustry.name,
+          industryKey: selectedIndustryId,
           state: stateInfo.name,
           district: selectedDistrict,
           createdAt: new Date().toLocaleDateString(),
+          investmentInr: investmentNum,
+          investmentFormatted,
+          areaSqft: Number(areaSqft) || 25000,
+          workforceCount: Number(employeeCount) || 80,
+          activityType: activityDescription.trim() || selectedIndustry.name,
         });
         clearInterval(stepInterval);
         setAnalysisStep(ANALYSIS_STEPS.length);

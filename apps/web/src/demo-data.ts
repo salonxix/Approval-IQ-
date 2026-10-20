@@ -1,8 +1,5 @@
 import type {
   RoadmapResponse,
-  RoadmapNode,
-  RoadmapEdge,
-  SchemeEvaluationInfo,
   UpdateStatusResponse,
   QuickOverviewResponse,
   AiSchemeAnalysisResponse,
@@ -15,7 +12,37 @@ import type {
   ApprovalInstanceStatus,
 } from './api-client';
 
-export const DEMO_PROJECT_ID = 'biz-demo-pune-brewery';
+import {
+  type ProjectHistoryItem,
+  type AiProjectDataset,
+  STORAGE_PROJECTS_KEY,
+  AI_DATASET_PREFIX,
+  DEFAULT_DEMO_PROJECT,
+  DEMO_PROJECT_ID,
+  getStoredProjects,
+  saveStoredProject,
+  getStoredProjectById,
+  generateAiProjectDataset,
+  getAiProjectDataset,
+  regenerateAiProjectDataset,
+  getStateJurisdiction,
+} from './ai-generator';
+
+export {
+  type ProjectHistoryItem,
+  type AiProjectDataset,
+  STORAGE_PROJECTS_KEY,
+  AI_DATASET_PREFIX,
+  DEFAULT_DEMO_PROJECT,
+  DEMO_PROJECT_ID,
+  getStoredProjects,
+  saveStoredProject,
+  getStoredProjectById,
+  generateAiProjectDataset,
+  getAiProjectDataset,
+  regenerateAiProjectDataset,
+  getStateJurisdiction,
+};
 
 // Dynamic in-memory status override map to let applicants interactively test status transitions
 const demoStatusOverrides = new Map<string, ApprovalInstanceStatus>();
@@ -23,27 +50,21 @@ const demoStatusOverrides = new Map<string, ApprovalInstanceStatus>();
 export function updateDemoInstanceStatus(
   instanceId: string,
   status: Exclude<ApprovalInstanceStatus, 'blocked'>,
+  projectId: string = DEMO_PROJECT_ID,
 ): UpdateStatusResponse {
   demoStatusOverrides.set(instanceId, status);
-  const roadmap = getDemoRoadmap();
+  const roadmap = getDemoRoadmap(projectId);
   const node = roadmap.nodes.find((n) => n.id === instanceId) ?? roadmap.nodes[0]!;
-  
+
   const unlockedDependentIds: string[] = [];
   if (status === 'done') {
-    // If MPCB CTE is done, unblock CTO
-    if (instanceId === 'inst-mpcb-cte') {
-      demoStatusOverrides.set('inst-mpcb-cto', 'available');
-      unlockedDependentIds.push('inst-mpcb-cto');
-    }
-    // If Fire Provisional is done, unblock Final Fire
-    if (instanceId === 'inst-fire-prov') {
-      demoStatusOverrides.set('inst-fire-final', 'available');
-      unlockedDependentIds.push('inst-fire-final');
-    }
-    // If DISH Plan is done, unblock DISH Licence
-    if (instanceId === 'inst-dish-plan') {
-      demoStatusOverrides.set('inst-dish-lic', 'available');
-      unlockedDependentIds.push('inst-dish-lic');
+    // Unblock dependent nodes based on roadmap edges
+    const outgoing = roadmap.edges.filter((e) => e.fromInstanceId === instanceId && e.gates);
+    for (const edge of outgoing) {
+      if (edge.toInstanceId) {
+        demoStatusOverrides.set(edge.toInstanceId, 'available');
+        unlockedDependentIds.push(edge.toInstanceId);
+      }
     }
   }
 
@@ -55,740 +76,74 @@ export function updateDemoInstanceStatus(
 }
 
 export function getDemoRoadmap(projectId: string = DEMO_PROJECT_ID): RoadmapResponse {
-  const getStatus = (id: string, fallback: ApprovalInstanceStatus): ApprovalInstanceStatus => {
-    return demoStatusOverrides.get(id) ?? fallback;
-  };
-
-  const nodes: RoadmapNode[] = [
-    {
-      id: 'inst-mpcb-cte',
-      projectId,
-      approvalDefinitionId: 'def-mpcb-cte',
-      approvalCode: 'MPCB-CTE-001',
-      approvalName: 'Consent to Establish (CTE)',
-      shortName: 'MPCB CTE',
-      whyRequired: 'Mandatory prior statutory consent under Section 25 of Water Act 1974 & Section 21 of Air Act 1981 before starting factory civil construction or machinery installation.',
-      inspectionRequired: true,
-      renewalRequired: false,
-      slaDays: 45,
-      slaBasis: 'Maharashtra Right to Services (RTS) Act 2015 - Notified 45 Working Days',
-      ambiguityNotes: 'Requires ETP sizing calculations and site plan certification by an accredited environmental consultant.',
-      authority: {
-        id: 'auth-mpcb',
-        code: 'AUTH-MPCB',
-        name: 'Maharashtra Pollution Control Board (MPCB)',
-      },
-      source: {
-        id: 'src-mpcb',
-        name: 'Water (Prevention and Control of Pollution) Act 1974',
-        citation: 'Sec 25/26 Water Act 1974',
-        url: 'https://mpcb.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-mpcb-cte',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-LEASE-DEED', name: 'MIDC Registered Lease Deed' },
-        { id: 'DOC-ETP-PLAN', name: 'Effluent Treatment Plant (ETP) Process Flow & Schematics' },
-        { id: 'DOC-SITE-PLAN', name: 'Factory Site Layout Plan' },
-      ],
-      status: getStatus('inst-mpcb-cte', 'in_progress'),
-      sourceUrl: 'https://mpcb.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: '2026-09-20T10:00:00.000Z',
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-fire-prov',
-      projectId,
-      approvalDefinitionId: 'def-fire-prov',
-      approvalCode: 'FIRE-PROVISIONAL-001',
-      approvalName: 'Provisional Fire NOC',
-      shortName: 'Provisional Fire NOC',
-      whyRequired: 'Statutory approval of factory fire fighting schemes, hydrants, water storage, and emergency egress drawings prior to construction.',
-      inspectionRequired: true,
-      renewalRequired: false,
-      slaDays: 15,
-      slaBasis: 'Maharashtra Fire Prevention and Life Safety Measures Act 2006',
-      ambiguityNotes: null,
-      authority: {
-        id: 'auth-fire',
-        code: 'AUTH-FIRE',
-        name: 'MIDC Fire Services Department',
-      },
-      source: {
-        id: 'src-fire',
-        name: 'Maharashtra Fire Prevention and Life Safety Measures Act 2006',
-        citation: 'Section 3 Fire Act 2006',
-        url: 'https://midcindia.org',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-fire-prov',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-FIRE-DRAWING', name: 'Fire Fighting System Layout & Evacuation Plan' },
-        { id: 'DOC-ARCH-DRAWING', name: 'Architectural Blueprint' },
-      ],
-      status: getStatus('inst-fire-prov', 'available'),
-      sourceUrl: 'https://midcindia.org',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: '2026-09-20T10:00:00.000Z',
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-dish-plan',
-      projectId,
-      approvalDefinitionId: 'def-dish-plan',
-      approvalCode: 'DISH-PLAN-001',
-      approvalName: 'Factory Building Plan Approval',
-      shortName: 'DISH Plan Approval',
-      whyRequired: 'Approval of factory structural layout, machinery spacing, ventilation, and worker safety under Section 6 of Factories Act 1948.',
-      inspectionRequired: false,
-      renewalRequired: false,
-      slaDays: 30,
-      slaBasis: 'Maharashtra Factories Rules 1963 - Rule 3',
-      ambiguityNotes: null,
-      authority: {
-        id: 'auth-dish',
-        code: 'AUTH-DISH',
-        name: 'Directorate of Industrial Safety & Health (DISH)',
-      },
-      source: {
-        id: 'src-dish',
-        name: 'Factories Act 1948',
-        citation: 'Sec 6 Factories Act 1948',
-        url: 'https://dish.maharashtra.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-dish-plan',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-FACTORY-LAYOUT', name: 'Machinery Placement & Egress Layout Drawing' },
-        { id: 'DOC-STABILITY-CERT', name: 'Chartered Structural Engineer Stability Certificate' },
-      ],
-      status: getStatus('inst-dish-plan', 'available'),
-      sourceUrl: 'https://dish.maharashtra.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: '2026-09-20T10:00:00.000Z',
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-fssai-lic',
-      projectId,
-      approvalDefinitionId: 'def-fssai-lic',
-      approvalCode: 'FSSAI-LICENCE-001',
-      approvalName: 'FSSAI Central Manufacturing Licence',
-      shortName: 'FSSAI Central Licence',
-      whyRequired: 'Statutory food & beverage safety manufacturing licence for craft beer and alcoholic beverage production and bottling.',
-      inspectionRequired: true,
-      renewalRequired: true,
-      slaDays: 60,
-      slaBasis: 'Food Safety and Standards (Licensing and Registration) Regulations 2011',
-      ambiguityNotes: null,
-      authority: {
-        id: 'auth-fssai',
-        code: 'AUTH-FSSAI',
-        name: 'Food Safety and Standards Authority of India (FSSAI)',
-      },
-      source: {
-        id: 'src-fssai',
-        name: 'Food Safety and Standards Act 2006',
-        citation: 'Sec 31 FSS Act 2006',
-        url: 'https://foscos.fssai.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-fssai-lic',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-WATER-TEST', name: 'Potable Water Analysis Report (IS 10500)' },
-        { id: 'DOC-FSMS-PLAN', name: 'Food Safety Management System (FSMS) Plan' },
-      ],
-      status: getStatus('inst-fssai-lic', 'available'),
-      sourceUrl: 'https://foscos.fssai.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: '2026-09-20T10:00:00.000Z',
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-lm-pack',
-      projectId,
-      approvalDefinitionId: 'def-lm-pack',
-      approvalCode: 'LM-PACKAGED-001',
-      approvalName: 'Legal Metrology Packaged Commodities Registration',
-      shortName: 'Legal Metrology Packaged',
-      whyRequired: 'Mandatory statutory registration for pre-packaged commodities, kegs, bottles, and volume verification under Rule 27.',
-      inspectionRequired: false,
-      renewalRequired: false,
-      slaDays: 20,
-      slaBasis: 'Legal Metrology (Packaged Commodities) Rules 2011',
-      ambiguityNotes: null,
-      authority: {
-        id: 'auth-lm',
-        code: 'AUTH-LM',
-        name: 'Legal Metrology Department, Maharashtra',
-      },
-      source: {
-        id: 'src-lm',
-        name: 'Legal Metrology Act 2009',
-        citation: 'Sec 19 Legal Metrology Act',
-        url: 'https://consumeraffairs.nic.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-lm-pack',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-LABEL-SPEC', name: 'Package Net Volume & MRP Label Proof' },
-      ],
-      status: getStatus('inst-lm-pack', 'available'),
-      sourceUrl: 'https://consumeraffairs.nic.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: '2026-09-20T10:00:00.000Z',
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-mpcb-cto',
-      projectId,
-      approvalDefinitionId: 'def-mpcb-cto',
-      approvalCode: 'MPCB-CTO-001',
-      approvalName: 'Consent to Operate (CTO)',
-      shortName: 'MPCB CTO',
-      whyRequired: 'Statutory operating consent required before trial runs or commercial production; verifies ETP commissioning.',
-      inspectionRequired: true,
-      renewalRequired: true,
-      slaDays: 45,
-      slaBasis: 'Water & Air Pollution Control Acts - 45 Day RTS SLA',
-      ambiguityNotes: 'Gated by MPCB Consent to Establish (CTE). Unlocks automatically once CTE is granted.',
-      authority: {
-        id: 'auth-mpcb',
-        code: 'AUTH-MPCB',
-        name: 'Maharashtra Pollution Control Board (MPCB)',
-      },
-      source: {
-        id: 'src-mpcb-cto',
-        name: 'Water & Air Acts',
-        citation: 'Sec 25/26 Water Act',
-        url: 'https://mpcb.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-mpcb-cto',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-ETP-COMMISSION', name: 'ETP Commissioning & Treated Effluent Analysis Report' },
-        { id: 'DOC-CTE-COPY', name: 'Copy of Granted Consent to Establish (CTE)' },
-      ],
-      status: getStatus('inst-mpcb-cto', 'blocked'),
-      sourceUrl: 'https://mpcb.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: null,
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-fire-final',
-      projectId,
-      approvalDefinitionId: 'def-fire-final',
-      approvalCode: 'FIRE-FINAL-001',
-      approvalName: 'Final Fire Safety Certificate (Final Fire NOC)',
-      shortName: 'Final Fire NOC',
-      whyRequired: 'Final physical verification of active fire hydrants, smoke detectors, and alarms after building construction.',
-      inspectionRequired: true,
-      renewalRequired: true,
-      slaDays: 20,
-      slaBasis: 'Maharashtra Fire Prevention Act 2006',
-      ambiguityNotes: 'Gated by Provisional Fire NOC and physical building completion.',
-      authority: {
-        id: 'auth-fire',
-        code: 'AUTH-FIRE',
-        name: 'MIDC Fire Services Department',
-      },
-      source: {
-        id: 'src-fire-final',
-        name: 'Maharashtra Fire Prevention Act',
-        citation: 'Sec 3 Fire Act',
-        url: 'https://midcindia.org',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-fire-final',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-FIRE-COMPLETION', name: 'Fire Fighting System Installation Completion Certificate (Form A)' },
-      ],
-      status: getStatus('inst-fire-final', 'blocked'),
-      sourceUrl: 'https://midcindia.org',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: null,
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-brl',
-      projectId,
-      approvalDefinitionId: 'def-brl',
-      approvalCode: 'BRL-001',
-      approvalName: 'Brewery & Bottling Licence (Form BRL)',
-      shortName: 'Excise Brewery Licence',
-      whyRequired: 'Manufacturing and wholesale storage licence under Maharashtra Prohibition Act 1949 and Brewery Rules 1969.',
-      inspectionRequired: true,
-      renewalRequired: true,
-      slaDays: 60,
-      slaBasis: 'Maharashtra Brewery Rules 1969 - RTS SLA 60 Days',
-      ambiguityNotes: 'Gated by prior MPCB CTE, Provisional Fire NOC, and DISH Factory Plan Approval.',
-      authority: {
-        id: 'auth-excise',
-        code: 'AUTH-EXCISE',
-        name: 'State Excise Department, Maharashtra',
-      },
-      source: {
-        id: 'src-excise',
-        name: 'Maharashtra Prohibition Act 1949',
-        citation: 'Sec 58-A Prohibition Act',
-        url: 'https://stateexcise.maharashtra.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-brl',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-EXCISE-CHALLAN', name: 'Treasury Challan for Licence Fee' },
-        { id: 'DOC-SOLVENCY-CERT', name: 'Bank Solvency Certificate (₹25 Lakhs)' },
-      ],
-      status: getStatus('inst-brl', 'blocked'),
-      sourceUrl: 'https://stateexcise.maharashtra.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: null,
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-dish-lic',
-      projectId,
-      approvalDefinitionId: 'def-dish-lic',
-      approvalCode: 'DISH-LICENCE-001',
-      approvalName: 'Factory Operational Licence (Form 4)',
-      shortName: 'Factory Licence',
-      whyRequired: 'Statutory operational licence under Section 6 of Factories Act 1948 prior to employing workers.',
-      inspectionRequired: true,
-      renewalRequired: true,
-      slaDays: 30,
-      slaBasis: 'Maharashtra Factories Rules 1963',
-      ambiguityNotes: 'Gated by prior DISH Factory Building Plan Approval.',
-      authority: {
-        id: 'auth-dish',
-        code: 'AUTH-DISH',
-        name: 'Directorate of Industrial Safety & Health (DISH)',
-      },
-      source: {
-        id: 'src-dish-lic',
-        name: 'Factories Act 1948',
-        citation: 'Sec 6 & 7 Factories Act',
-        url: 'https://dish.maharashtra.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-dish-lic',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-FORM-2', name: 'Notice of Occupation (Form 2)' },
-      ],
-      status: getStatus('inst-dish-lic', 'blocked'),
-      sourceUrl: 'https://dish.maharashtra.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: null,
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-    {
-      id: 'inst-excise-lbl',
-      projectId,
-      approvalDefinitionId: 'def-excise-lbl',
-      approvalCode: 'EXCISE-LABEL-001',
-      approvalName: 'Excise Brand & Label Registration',
-      shortName: 'Brand & Label Approval',
-      whyRequired: 'Statutory approval of beer brand labels, alcoholic strength, and packaging specifications before commercial retail dispatch.',
-      inspectionRequired: false,
-      renewalRequired: true,
-      slaDays: 15,
-      slaBasis: 'Maharashtra Potable Liquor Rules',
-      ambiguityNotes: 'Gated by State Excise Brewery Licence (BRL-001).',
-      authority: {
-        id: 'auth-excise',
-        code: 'AUTH-EXCISE',
-        name: 'State Excise Department, Maharashtra',
-      },
-      source: {
-        id: 'src-excise-lbl',
-        name: 'Maharashtra Potable Liquor Rules',
-        citation: 'Rule 14 Label Approval',
-        url: 'https://stateexcise.maharashtra.gov.in',
-        verificationStatus: 'verified',
-      },
-      evaluationResultId: 'eval-res-excise-lbl',
-      outcome: 'applicable',
-      attentionRequired: false,
-      missingFields: [],
-      requiredDocuments: [
-        { id: 'DOC-LABEL-ART', name: 'Label Artwork & Chemical Analysis Certificate' },
-      ],
-      status: getStatus('inst-excise-lbl', 'blocked'),
-      sourceUrl: 'https://stateexcise.maharashtra.gov.in',
-      lastVerifiedDate: '2026-09-15',
-      releaseId: 'rel-2026-09',
-      releaseVersion: 'ruleset-v2026.09.1',
-      unlockedAt: null,
-      updatedAt: '2026-10-18T14:30:00.000Z',
-    },
-  ];
-
-  const edges: RoadmapEdge[] = [
-    {
-      id: 'edge-mpcb-cte-cto',
-      fromInstanceId: 'inst-mpcb-cte',
-      toInstanceId: 'inst-mpcb-cto',
-      fromApprovalId: 'def-mpcb-cte',
-      fromApprovalCode: 'MPCB-CTE-001',
-      toApprovalId: 'def-mpcb-cto',
-      toApprovalCode: 'MPCB-CTO-001',
-      type: 'depends_on',
-      gates: true,
-    },
-    {
-      id: 'edge-fire-prov-final',
-      fromInstanceId: 'inst-fire-prov',
-      toInstanceId: 'inst-fire-final',
-      fromApprovalId: 'def-fire-prov',
-      fromApprovalCode: 'FIRE-PROVISIONAL-001',
-      toApprovalId: 'def-fire-final',
-      toApprovalCode: 'FIRE-FINAL-001',
-      type: 'depends_on',
-      gates: true,
-    },
-    {
-      id: 'edge-mpcb-brl',
-      fromInstanceId: 'inst-mpcb-cte',
-      toInstanceId: 'inst-brl',
-      fromApprovalId: 'def-mpcb-cte',
-      fromApprovalCode: 'MPCB-CTE-001',
-      toApprovalId: 'def-brl',
-      toApprovalCode: 'BRL-001',
-      type: 'depends_on',
-      gates: true,
-    },
-    {
-      id: 'edge-fire-brl',
-      fromInstanceId: 'inst-fire-prov',
-      toInstanceId: 'inst-brl',
-      fromApprovalId: 'def-fire-prov',
-      fromApprovalCode: 'FIRE-PROVISIONAL-001',
-      toApprovalId: 'def-brl',
-      toApprovalCode: 'BRL-001',
-      type: 'depends_on',
-      gates: true,
-    },
-    {
-      id: 'edge-dish-brl',
-      fromInstanceId: 'inst-dish-plan',
-      toInstanceId: 'inst-brl',
-      fromApprovalId: 'def-dish-plan',
-      fromApprovalCode: 'DISH-PLAN-001',
-      toApprovalId: 'def-brl',
-      toApprovalCode: 'BRL-001',
-      type: 'depends_on',
-      gates: true,
-    },
-    {
-      id: 'edge-dish-plan-lic',
-      fromInstanceId: 'inst-dish-plan',
-      toInstanceId: 'inst-dish-lic',
-      fromApprovalId: 'def-dish-plan',
-      fromApprovalCode: 'DISH-PLAN-001',
-      toApprovalId: 'def-dish-lic',
-      toApprovalCode: 'DISH-LICENCE-001',
-      type: 'depends_on',
-      gates: true,
-    },
-    {
-      id: 'edge-brl-label',
-      fromInstanceId: 'inst-brl',
-      toInstanceId: 'inst-excise-lbl',
-      fromApprovalId: 'def-brl',
-      fromApprovalCode: 'BRL-001',
-      toApprovalId: 'def-excise-lbl',
-      toApprovalCode: 'EXCISE-LABEL-001',
-      type: 'depends_on',
-      gates: true,
-    },
-  ];
-
-  const parallelGroups = [
-    ['inst-mpcb-cte', 'inst-fire-prov', 'inst-dish-plan', 'inst-fssai-lic', 'inst-lm-pack'],
-    ['inst-mpcb-cto', 'inst-fire-final', 'inst-brl', 'inst-dish-lic'],
-    ['inst-excise-lbl'],
-  ];
-
-  const schemes: SchemeEvaluationInfo[] = [
-    {
-      scheme: {
-        id: 'MSME-CGTMSE-001',
-        name: 'Credit Guarantee Scheme for Micro & Small Enterprises (CGTMSE)',
-        shortName: 'CGTMSE Collateral-Free Credit',
-        description: 'Collateral-free credit facility up to ₹5.00 Crore for MSME manufacturing units with up to 85% sovereign guarantee cover.',
-        jurisdiction: 'Central (Ministry of MSME & SIDBI)',
-        sourceTitle: 'CGTMSE Guidelines 2026',
-        sourceUrl: 'https://www.cgtmse.in',
-        verificationDate: '2026-09-01',
-      },
-      outcome: 'potentially_eligible',
-      matchedConditions: ['Enterprise classified as MSME Manufacturing', 'CapEx facility under ₹5.00 Cr guarantee ceiling'],
-      matchedExclusions: [],
-      factsUsed: { industry: 'brewery', investmentAmountInr: 40000000 },
-      neededInformation: [],
-      explanation: 'Your enterprise is registered as an MSME manufacturing unit with capital outlay within eligible limits. You qualify for up to ₹5.00 Crore collateral-free debt financing.',
-    },
-    {
-      scheme: {
-        id: 'DGFT-EPCG-001',
-        name: 'Export Promotion Capital Goods Scheme (EPCG)',
-        shortName: 'EPCG 0% Customs Duty',
-        description: 'Zero customs duty import on capital goods & brewery machinery with export commitment.',
-        jurisdiction: 'Central (DGFT & Ministry of Commerce)',
-        sourceTitle: 'Foreign Trade Policy 2023-2028',
-        sourceUrl: 'https://www.dgft.gov.in',
-        verificationDate: '2026-09-01',
-      },
-      outcome: 'potentially_eligible',
-      matchedConditions: ['Import of capital machinery for industrial production'],
-      matchedExclusions: [],
-      factsUsed: { industry: 'brewery' },
-      neededInformation: [],
-      explanation: 'Eligible for 0% customs duty on imported brewery and bottling equipment subject to fulfilling an export obligation of 6x duty saved over 6 years.',
-    },
-    {
-      scheme: {
-        id: 'MSME-ZED-001',
-        name: 'MSME Zero Defect Zero Effect Certification Scheme (ZED)',
-        shortName: 'MSME ZED Green Subsidy',
-        description: 'Up to 80% government subsidy on environmental audit, green certification, and effluent water management systems.',
-        jurisdiction: 'Central (Ministry of MSME)',
-        sourceTitle: 'MSME ZED Scheme Guidelines',
-        sourceUrl: 'https://zed.msme.gov.in',
-        verificationDate: '2026-09-01',
-      },
-      outcome: 'potentially_eligible',
-      matchedConditions: ['MSME manufacturing entity with zero-discharge ETP commitment'],
-      matchedExclusions: [],
-      factsUsed: { industry: 'brewery' },
-      neededInformation: [],
-      explanation: 'Qualifies for 80% financial subsidy on green factory certification and effluent treatment plant energy audits.',
-    },
-    {
-      scheme: {
-        id: 'STARTUP-80IAC-001',
-        name: 'Section 80-IAC Corporate Income Tax Exemption',
-        shortName: 'Section 80-IAC Tax Holiday',
-        description: '100% tax holiday on corporate profits for 3 consecutive financial years out of 10 years.',
-        jurisdiction: 'Central (CBDT, Ministry of Finance)',
-        sourceTitle: 'Income Tax Act 1961 - Section 80-IAC',
-        sourceUrl: 'https://www.incometax.gov.in',
-        verificationDate: '2026-09-01',
-      },
-      outcome: 'potentially_eligible',
-      matchedConditions: ['Private Limited Company or LLP registered with DPIIT'],
-      matchedExclusions: [],
-      factsUsed: { entityType: 'pvt_ltd' },
-      neededInformation: [],
-      explanation: 'DPIIT recognized entities can elect a 100% deduction on corporate tax profits for 3 consecutive financial years.',
-    },
-    {
-      scheme: {
-        id: 'MAHA-PSI-2019',
-        name: 'Package Scheme of Incentives 2019 (Maharashtra)',
-        shortName: 'Maharashtra PSI 2019',
-        description: 'State industrial capital and SGST cash subsidy scheme.',
-        jurisdiction: 'Maharashtra (Industries Department)',
-        sourceTitle: 'Government Resolution No. PSI-2019/CR-46/IND-8',
-        sourceUrl: 'https://maitri.mahaonline.gov.in',
-        verificationDate: '2026-09-01',
-        exclusionReason: 'Alcohol and potable liquor manufacturing is classified under Annexure II negative list.',
-      },
-      outcome: 'excluded',
-      matchedConditions: ['Industrial unit located in Maharashtra (Zone B - Chakan, Pune)'],
-      matchedExclusions: ['Annexure II Negative List Item 4: Manufacture of potable alcohol, beer, or distilled spirits'],
-      factsUsed: { industry: 'brewery', state: 'Maharashtra', district: 'Pune' },
-      neededInformation: [],
-      explanation: 'Alcohol and brewery manufacturing is specifically excluded from direct state capital cash subsidies under Maharashtra PSI-2019 Annexure II. Central fiscal guarantees and duty exemptions remain fully accessible.',
-    },
-  ];
+  const dataset = getAiProjectDataset(projectId);
+  const nodes = dataset.roadmap.nodes.map((n) => {
+    const override = demoStatusOverrides.get(n.id);
+    return override ? { ...n, status: override } : n;
+  });
 
   return {
-    projectId,
-    releaseVersion: 'ruleset-v2026.09.1',
+    ...dataset.roadmap,
     nodes,
-    edges,
-    parallelGroups,
-    schemes,
   };
 }
 
 export function getDemoQuickOverview(projectId: string = DEMO_PROJECT_ID): QuickOverviewResponse {
-  return {
-    isReady: true,
-    projectId,
-    projectName: 'Pune Craft Brewery',
-    summary: 'Your 6,000 sq.ft. craft brewing and bottling facility in MIDC Chakan, Pune has 10 applicable statutory clearances with 3 ready for immediate submission and 3 blocked by prerequisites. Clearances are protected under the Maharashtra Right to Services Act.',
-    businessContext: {
-      name: 'Pune Craft Brewery',
-      industry: 'Craft Brewery & Distilleries',
-      location: 'Pune, Maharashtra (MIDC Chakan Phase II)',
-      investmentFormatted: '₹4.00 Crore',
-      workforceFormatted: '25 Personnel',
-      status: 'Intake Confirmed',
-    },
-    keyHighlights: [
-      { label: 'Statutory Clearances', value: '10 Applicable', badge: 'Active Docket', tone: 'positive' },
-      { label: 'Ready to File', value: '3 Approvals', badge: 'Parallel Batch', tone: 'positive' },
-      { label: 'Blocked Prereqs', value: '3 Dependencies', badge: 'Critical Path', tone: 'warning' },
-      { label: 'RTS SLA Target', value: '45–65 Days', badge: 'Deemed Approval', tone: 'neutral' },
-    ],
-    situation: 'Your industrial profile is fully confirmed with 10 statutory approvals identified across MPCB, DISH, Fire Services, FSSAI, and State Excise. Initial pre-construction filings can start immediately in parallel.',
-    whatYouNeedToDo: 'Submit your 3 available filings (DISH Plan, MPCB CTE, Provisional Fire) simultaneously to trigger coordinated joint site inspection, and upload the MIDC lease agreement to your Document Vault.',
-    whatIsReady: 'DISH Factory Plan Approval (30-day SLA), MPCB Consent to Establish (45-day SLA), and Provisional Fire NOC (15-day SLA).',
-    whatIsBlocking: 'MPCB Consent to Operate is blocked until CTE is issued; Final Fire NOC requires Provisional Fire clearance; State Excise BRL requires prior clearances.',
-    schemesAndIncentives: 'Eligible for ₹5.00 Cr CGTMSE collateral-free financing, 0% customs duty under EPCG, and 80% MSME ZED green certification subsidies. Direct Maharashtra PSI-2019 cash subsidies are excluded under Annexure II.',
-    missingInformation: [],
-    documents: {
-      totalRequired: 6,
-      uploadedCount: 4,
-      verifiedCount: 4,
-      missingCount: 2,
-      missingList: [
-        'MIDC Registered Lease Deed',
-        'Effluent Treatment Plant (ETP) Process Flow & Schematics',
-      ],
-    },
-    nextSteps: [
-      {
-        id: 'step-01',
-        title: 'Batch Submit 3 Available Clearances',
-        description: 'Initiate DISH Plan, MPCB CTE, and Provisional Fire NOC simultaneously in Layer 0.',
-        actionLabel: 'Open Roadmap',
-        actionRoute: `/projects/${projectId}/roadmap`,
-        priority: 'high',
-      },
-      {
-        id: 'step-02',
-        title: 'Upload Registered MIDC Lease Deed',
-        description: 'Upload your verified lease agreement to unblock MPCB and DISH verification.',
-        actionLabel: 'Manage Vault',
-        actionRoute: `/projects/${projectId}/roadmap`,
-        priority: 'high',
-      },
-      {
-        id: 'step-03',
-        title: 'Apply for ₹5 Cr CGTMSE Guarantee',
-        description: 'Lock in collateral-free working capital and term loan guarantees with SIDBI partner banks.',
-        actionLabel: 'Explore Schemes',
-        actionRoute: `/projects/${projectId}/schemes`,
-        priority: 'medium',
-      },
-    ],
-    rtsSlaTimelineSummary: '45 to 65 working days on critical path with statutory deemed-approval protection.',
-    generatedAt: new Date().toISOString(),
-    isAiSynthesized: true,
-  };
+  const dataset = getAiProjectDataset(projectId);
+  return dataset.quickOverview;
 }
 
 export function getDemoAiSchemeAnalysis(projectId: string = DEMO_PROJECT_ID): AiSchemeAnalysisResponse {
+  const dataset = getAiProjectDataset(projectId);
+  return dataset.schemeAnalysis;
+}
+
+export function getDemoDocuments(projectId: string = DEMO_PROJECT_ID): Document[] {
+  const dataset = getAiProjectDataset(projectId);
+  return dataset.documents;
+}
+
+export function getDemoInspectionsCandidates(projectId: string = DEMO_PROJECT_ID): InspectionCandidatesResponse {
+  const dataset = getAiProjectDataset(projectId);
+  return dataset.inspectionCandidates;
+}
+
+export function getDemoJointInspections(projectId: string = DEMO_PROJECT_ID): JointInspectionView[] {
+  const dataset = getAiProjectDataset(projectId);
+  return dataset.jointInspections;
+}
+
+export function getDemoClarifications(projectId: string = DEMO_PROJECT_ID): ClarificationsInbox {
   return {
     projectId,
-    businessContext: {
-      legalName: 'Pune Craft Brewery Private Limited',
-      industry: 'Craft Brewery & Distilleries',
-      activity: 'Fermentation, brewing, and packaging of craft beverages',
-      state: 'Maharashtra',
-      district: 'Pune',
-      investmentAmountInr: 40000000,
-      investmentCr: '₹4.00 Cr',
-      builtUpAreaSqft: 6000,
-      workforceHeadcount: 25,
-      fuelType: 'Electric & LPG Boilers',
+    total: 0,
+    openCount: 0,
+    awaitingApplicantCount: 0,
+    countsByStatus: {
+      requested: 0,
+      responded: 0,
+      resolved: 0,
+      cancelled: 0,
     },
-    aiReadinessScore: 88,
-    totalPotentialFiscalBenefit: '₹5.42 Crore',
-    strategicSummary: 'While Maharashtra PSI-2019 excludes potable alcohol from direct SGST cash subsidies under Annexure II, your facility has exceptionally high fiscal leverage through central schemes: ₹5.00 Cr CGTMSE debt guarantee, ₹32 Lakhs customs duty savings under EPCG, and ₹10 Lakhs ZED green manufacturing grants.',
-    recommendations: [
-      {
-        id: 'rec-01',
-        title: 'Leverage CGTMSE for Collateral-Free Capex Term Loans',
-        domain: 'Credit & Capital',
-        impact: 'High',
-        estimatedSavings: '₹5.00 Cr Guarantee Cover',
-        action: 'Approach public sector banks with Udyam registration to waive third-party collateral requirements.',
-      },
-      {
-        id: 'rec-02',
-        title: 'Import Brewing Kettles via EPCG Scheme at 0% Duty',
-        domain: 'Customs & Taxation',
-        impact: 'High',
-        estimatedSavings: '₹32 Lakhs Customs Waiver',
-        action: 'Apply for DGFT EPCG authorization prior to opening letter of credit for imported European fermenters.',
-      },
-      {
-        id: 'rec-03',
-        title: 'Claim MSME ZED Green Certification Subsidies',
-        domain: 'Environmental Standards',
-        impact: 'Medium',
-        estimatedSavings: '₹10 Lakhs Testing & Audit Subsidy',
-        action: 'Enrol in MSME ZED portal during ETP installation to receive 80% subsidy on environmental audits.',
-      },
-    ],
-    generatedAt: new Date().toISOString(),
-    aiModel: 'ApprovalIQ Statutory Regulatory Model v2026.09',
+    clarifications: [],
   };
 }
 
-export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatResponse {
+export function getDemoAiSchemeAdvisorAnswer(query: string, projectId: string = DEMO_PROJECT_ID): AiSchemeChatResponse {
+  const dataset = getAiProjectDataset(projectId);
+  const project = dataset.project;
   const q = query.toLowerCase();
 
   // 1. CGTMSE Collateral-Free Credit Guarantee
   if (/cgtmse|collateral|credit guarantee|loan|bank loan|debt|sidbi|term loan|financing/.test(q)) {
     return {
       query,
-      answer: "Under the **Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)**, your Pune Craft Brewery unit qualifies for up to **₹5.00 Crore** in collateral-free credit facilities. The trust provides an **85% sovereign guarantee cover** for MSME manufacturing units, allowing you to secure term loans for brewhouse equipment and working capital limits without pledging personal residential property or third-party collateral.",
+      answer: `Under the **Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)**, your **${project.name}** facility (${project.district}, ${project.state}) qualifies for up to **₹5.00 Crore** in collateral-free credit facilities. The trust provides an **85% sovereign guarantee cover** for MSME manufacturing units, allowing you to secure term loans for plant equipment and working capital limits without pledging personal residential property or third-party collateral.`,
       relevantSchemes: ['MSME-CGTMSE-001', 'MSME-UDYAM-001'],
       actionableSteps: [
-        'Obtain Udyam MSME Registration Certificate for Small Enterprise classification',
+        'Obtain Udyam MSME Registration Certificate for Manufacturing Enterprise classification',
         'Prepare Detailed Project Report (DPR) with 7-year DSCR financial projections (target DSCR >= 1.5)',
-        'Submit loan application through nationalized partner banks (SBI, Bank of Baroda, HDFC, or SIDBI) under CGTMSE cover',
+        `Submit loan dossier through nationalized partner banks (SBI, Bank of Baroda, HDFC, or SIDBI) under CGTMSE cover in ${project.district}`,
       ],
       confidenceScore: 0.98,
       sourceAttribution: 'Ministry of MSME & SIDBI CGTMSE Operational Guidelines 2026',
@@ -797,14 +152,14 @@ export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatRespons
   }
 
   // 2. EPCG 0% Customs Duty Machinery Import
-  if (/epcg|customs|import|duty|machinery|kettle|fermenter|brewhouse|bottling line/.test(q)) {
+  if (/epcg|customs|import|duty|machinery|kettle|fermenter|brewhouse|bottling line|equipment/.test(q)) {
     return {
       query,
-      answer: "The **EPCG (Export Promotion Capital Goods)** scheme allows you to import high-efficiency brewing kettles, conical fermenters, bright beer tanks (BBTs), and automated bottling lines at **0% basic customs duty** (normally 27.5% combined tariff). In return, you commit to an export obligation equivalent to **6 times the customs duty saved** over a block of 6 years (or 75% deemed export if supplying duty-free international export channels).",
+      answer: `The **EPCG (Export Promotion Capital Goods)** scheme allows **${project.name}** to import high-precision automated manufacturing equipment and processing plant components at **0% basic customs duty** (normally 27.5% combined tariff). In return, you commit to an export obligation equivalent to **6 times the customs duty saved** over a block of 6 years.`,
       relevantSchemes: ['DGFT-EPCG-001'],
       actionableSteps: [
         'Obtain Importer-Exporter Code (IEC) from DGFT portal',
-        'Acquire Chartered Engineer Certificate certifying technical specifications of imported brewing plant',
+        'Acquire Chartered Engineer Certificate certifying technical specifications of imported plant',
         'Submit online EPCG authorization application prior to equipment bill of lading',
       ],
       confidenceScore: 0.96,
@@ -813,19 +168,38 @@ export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatRespons
     };
   }
 
-  // 3. Maharashtra PSI 2019 & Negative List Policy Analysis
-  if (/psi|maharashtra|negative list|annexure ii|subsidy|sgst|state grant|capital subsidy/.test(q)) {
+  // 3. State Industrial Policy & Subsidies
+  if (/psi|maharashtra|negative list|subsidy|sgst|state grant|capital subsidy|incentive|aatmanirbhar|policy/.test(q)) {
+    const isAlcohol = (project.industryKey || '').includes('brewery') || (project.industry || '').toLowerCase().includes('brewery');
+    const isMaha = project.state.toLowerCase().includes('maharashtra');
+
+    if (isAlcohol && isMaha) {
+      return {
+        query,
+        answer: `Under the **Maharashtra Package Scheme of Incentives (PSI 2019)**, potable alcohol, beer brewing, and distillery units are categorized under the **Annexure II Negative List** (Item 4). Consequently, your unit is **excluded from direct state SGST cash reimbursement and capital cash grants**. However, **${project.name}** remains **100% eligible** for Central CGTMSE ₹5.00 Cr credit guarantees, EPCG 0% customs duty waivers, Section 80-IAC 3-year tax holidays, and state electricity duty exemptions.`,
+        relevantSchemes: ['MAHA-PSI-2019', 'MSME-CGTMSE-001', 'DGFT-EPCG-001', 'STARTUP-80IAC-001'],
+        actionableSteps: [
+          'Structure fiscal planning around Central MSME credit guarantees rather than state cash grants',
+          'Register under MSME Udyam to claim statutory electricity duty waivers',
+          'Leverage Section 80-IAC for a 3-year complete corporate income tax holiday',
+        ],
+        confidenceScore: 0.99,
+        sourceAttribution: 'Government of Maharashtra Industries Department GR PSI-2019/CR-46 (Annexure II)',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
     return {
       query,
-      answer: "Under the **Maharashtra Package Scheme of Incentives (PSI 2019)**, potable alcohol, beer brewing, and distillery manufacturing units are categorized under the **Annexure II Negative List** (Item 4). Consequently, your unit is **excluded from direct state SGST cash reimbursement and capital cash grants**. However, your enterprise remains **100% eligible** for Central CGTMSE ₹5.00 Cr credit guarantees, EPCG 0% customs duty waivers, Section 80-IAC 3-year tax holidays, and state electricity duty exemptions.",
-      relevantSchemes: ['MAHA-PSI-2019', 'MSME-CGTMSE-001', 'DGFT-EPCG-001', 'STARTUP-80IAC-001'],
+      answer: `Under the **${project.state} Industrial Policy**, your **${project.name}** facility in **${project.district}** (${project.investmentFormatted || '₹25.00 Cr'} CapEx) qualifies as an eligible manufacturing enterprise. You are eligible for **100% net SGST reimbursement**, **statutory electricity duty exemptions for 5 to 7 years**, and stamp duty concessions on industrial land leases.`,
+      relevantSchemes: [`STATE-IND-POLICY-${dataset.roadmap.nodes[0]?.authority?.code || 'SPCB'}`, 'MSME-CGTMSE-001'],
       actionableSteps: [
-        'Structure fiscal planning around Central MSME credit guarantees rather than state cash grants',
-        'Register under MSME Udyam to claim statutory electricity duty waivers',
-        'Leverage Section 80-IAC for a 3-year complete corporate income tax holiday',
+        `Register project on ${dataset.quickOverview.businessContext.location} single window portal`,
+        'Obtain Udyam MSME Registration Certificate to claim power tariff concessions',
+        'Submit Eligibility Certificate (EC) application with the District Industries Centre (DIC)',
       ],
-      confidenceScore: 0.99,
-      sourceAttribution: 'Government of Maharashtra Industries Department GR PSI-2019/CR-46 (Annexure II)',
+      confidenceScore: 0.96,
+      sourceAttribution: `${project.state} Industries Department Industrial Policy Guidelines`,
       timestamp: new Date().toISOString(),
     };
   }
@@ -834,7 +208,7 @@ export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatRespons
   if (/80-iac|80iac|tax holiday|income tax|corporate tax|tax exemption|dpiit|startup/.test(q)) {
     return {
       query,
-      answer: "Under **Section 80-IAC of the Income Tax Act**, eligible DPIIT-recognized startups can claim a **100% deduction of profits and gains for 3 consecutive financial years** out of the first 10 years of incorporation. For Pune Craft Brewery, this allows you to shelter retained earnings from corporate income tax and reinvest operating cash flows directly into plant expansion and working capital.",
+      answer: `Under **Section 80-IAC of the Income Tax Act**, eligible DPIIT-recognized startups can claim a **100% deduction of profits and gains for 3 consecutive financial years** out of the first 10 years of incorporation. For **${project.name}**, this allows you to shelter retained earnings from corporate income tax and reinvest operating cash flows directly into plant expansion and working capital.`,
       relevantSchemes: ['STARTUP-80IAC-001'],
       actionableSteps: [
         'Ensure incorporation as a Private Limited Company or LLP within the last 10 years',
@@ -851,12 +225,12 @@ export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatRespons
   if (/zed|zero defect|green subsidy|iso|clean energy|environmental subsidy|audit subsidy/.test(q)) {
     return {
       query,
-      answer: "The **MSME ZED (Zero Defect Zero Effect)** certification scheme provides up to an **80% financial subsidy** on environmental audits, water conservation assessments, cleaner technology adoption, and quality certification costs. Achieving ZED Silver or Gold certification also unlocks an **additional 0.5% interest rate discount** on bank credit facilities.",
+      answer: `The **MSME ZED (Zero Defect Zero Effect)** certification scheme provides up to an **80% financial subsidy** on environmental audits, water conservation assessments, cleaner technology adoption, and quality certification costs. Achieving ZED Silver or Gold certification also unlocks an **additional 0.5% interest rate discount** on bank credit facilities.`,
       relevantSchemes: ['MSME-ZED-001', 'MSME-CGTMSE-001'],
       actionableSteps: [
         'Enrol on the MSME ZED portal using your Udyam registration number',
         'Conduct the initial online self-assessment for environmental and quality benchmarks',
-        'Schedule accredited desktop and physical site verification during ETP commissioning',
+        'Schedule accredited desktop and physical site verification during plant commissioning',
       ],
       confidenceScore: 0.94,
       sourceAttribution: 'Ministry of MSME ZED Sustainable Certification Guidelines',
@@ -864,321 +238,26 @@ export function getDemoAiSchemeAdvisorAnswer(query: string): AiSchemeChatRespons
     };
   }
 
-  // 6. Electricity Duty Exemption
-  if (/electricity|power tariff|duty exemption|msedcl subsidy|power rebate|energy/.test(q)) {
-    return {
-      query,
-      answer: "Under the **Maharashtra Electricity Duty Act**, manufacturing MSMEs holding an active Udyam registration are eligible for a **100% exemption from state electricity duty for a period of 5 years** from the date of commercial production. In MIDC Chakan (Group C taluka), this duty waiver saves approximately **₹1.20 to ₹1.80 per kWh**, substantially reducing monthly power utility operating expenditure.",
-      relevantSchemes: ['MSME-UDYAM-001', 'MAHA-ELEC-2026'],
-      actionableSteps: [
-        'Secure permanent HT 150 kVA power connection meter installation from MSEDCL',
-        'Submit application for Electricity Duty Exemption to the Electrical Inspectorate, Pune Division',
-        'Furnish certified copy of Udyam Certificate and factory commercial production commencement certificate',
-      ],
-      confidenceScore: 0.95,
-      sourceAttribution: 'Maharashtra Energy Department GR on Industrial Electricity Duty Concessions',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // 7. Stamp Duty Concessions on MIDC Lease
-  if (/stamp duty|lease deed stamp|registration concession|midc stamp/.test(q)) {
-    return {
-      query,
-      answer: "Industrial lease deeds executed for plots or built-up sheds inside **MIDC Industrial Parks** qualify for **concessional stamp duty of 0.5%** under the Maharashtra Stamp Act (compared to standard 5% commercial lease rates). For your 6,000 sq.ft shed lease in MIDC Chakan Phase II, this limits stamp duty to statutory minimum slabs.",
-      relevantSchemes: ['MAHA-STAMP-CONCESSION'],
-      actionableSteps: [
-        'Obtain formal MIDC sub-lease sanction order from MIDC Regional Officer Pune',
-        'Draft registered lease deed citing Maharashtra Industrial Policy Stamp Concession clauses',
-        'Pay duty via Government Receipt Accounting System (GRAS) at Sub-Registrar Khed/Chakan',
-      ],
-      confidenceScore: 0.93,
-      sourceAttribution: 'Inspector General of Registration & Stamps, Maharashtra State',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // 8. GST, Input Tax Credit & Excise Interplay
-  if (/gst|vat|mvat|tax structure|indirect tax|input tax credit|itc|inverted duty/.test(q)) {
-    return {
-      query,
-      answer: "Under **Article 366(12A) of the Constitution of India**, alcoholic liquor for human consumption is constitutionally excluded from GST and is governed by **Maharashtra State Excise Duty + Maharashtra VAT (MVAT)**. Raw materials (malt, hops), packaging (glass bottles, cans), and brewery plant machinery incur **18% to 28% GST**. Because finished beer is outside GST, **Input Tax Credit (ITC) cannot be adjusted against State Excise or VAT**, making input GST a direct component of production cost.",
-      relevantSchemes: ['DGFT-EPCG-001'],
-      actionableSteps: [
-        'Utilize EPCG scheme to eliminate the 27.5% customs duty/IGST component on imported brewhouse plant',
-        'Maintain segregated accounting books for GST-paid capital inputs and State Excise revenue passes',
-        'File regular GSTR-1 and GSTR-3B for outward supply of non-potable by-products (spent grain cattle feed)',
-      ],
-      confidenceScore: 0.97,
-      sourceAttribution: 'GST Council Constitutional Provisions & Maharashtra State Excise Department',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // 9. Udyam MSMED Act 45-Day Payment Protection
-  if (/udyam|samadhaan|delayed payment|buyer protection|section 15|45 days|payment delay/.test(q)) {
-    return {
-      query,
-      answer: "Under **Section 15 & 16 of the MSMED Act, 2006**, all institutional buyers (hotel chains, licensed distributors, retailers) are legally mandated to make payment to registered MSME suppliers within **45 days**. If payment is delayed beyond 45 days, the buyer is statutorily liable to pay **compound interest with monthly rests at 3 times the RBI Bank Rate**.",
-      relevantSchemes: ['MSME-UDYAM-001', 'MSME-SAMADHAAN-001'],
-      actionableSteps: [
-        'Print your Udyam Registration number on every commercial invoice and delivery challan',
-        'State payment due date strictly within 45 days on all wholesale dispatch notes',
-        'File delayed payment recovery claims on the MSME Samadhaan portal for summary resolution in Pune',
-      ],
-      confidenceScore: 0.96,
-      sourceAttribution: 'Ministry of Micro, Small and Medium Enterprises (MSMED Act 2006)',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // 10. Solar Rooftop & Renewable Energy Subsidies (MEDA)
-  if (/solar|meda|rooftop solar|renewable|clean energy|power cost/.test(q)) {
-    return {
-      query,
-      answer: "Through the **Maharashtra Energy Development Agency (MEDA)** and MSEDCL Industrial Solar Net Metering regulations, your 6,000 sq.ft industrial shed in Chakan Phase II can accommodate up to a **50 kW to 80 kW grid-tied rooftop solar array**. This reduces your daytime brewhouse refrigeration and power bill by up to 40%, with excess generation banked into the MSEDCL grid under gross/net metering tariffs.",
-      relevantSchemes: ['MEDA-SOLAR-2026', 'MSME-ZED-001'],
-      actionableSteps: [
-        'Conduct roof structural load stability assessment with an empanelled chartered engineer',
-        'Submit grid-connectivity feasibility application on the MSEDCL solar rooftop portal',
-        'Leverage accelerated depreciation (40%) under Section 32 of Income Tax Act for solar plant assets',
-      ],
-      confidenceScore: 0.92,
-      sourceAttribution: 'Maharashtra Energy Development Agency (MEDA) Rooftop Guidelines',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // 11. Working Capital Lines & Priority Sector MSME Banking
-  if (/working capital|cash credit|cc limit|overdraft|priority sector|bank financing/.test(q)) {
-    return {
-      query,
-      answer: "As an Udyam-registered Small Enterprise, Pune Craft Brewery qualifies for **Priority Sector Lending (PSL)** bank facilities from public and private scheduled banks at concessional rates (8.5% to 9.5% p.a.). Lenders calculate **Cash Credit (CC) limits based on 20% to 25% of projected annual turnover** (Nayak Committee formula), hypothecated against raw malt stock, packaging material, and trade receivables.",
-      relevantSchemes: ['MSME-CGTMSE-001', 'MSME-UDYAM-001'],
-      actionableSteps: [
-        'Prepare 12-month month-wise working capital requirement statement and inventory holding cycle',
-        'Approach partner banks (State Bank of India MSME Chakan branch, Bank of Baroda, or SIDBI Pune)',
-        'Link working capital loan sanction to CGTMSE guarantee cover to avoid personal real estate pledge',
-      ],
-      confidenceScore: 0.95,
-      sourceAttribution: 'Reserve Bank of India (RBI) Priority Sector Lending Master Circular',
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  // 12. Dynamic Fiscal & Scheme Synthesizer (for any other inquiry)
+  // Dynamic Project-Aware Synthesizer for any other query
   return {
     query,
-    answer: `For **Pune Craft Brewery** (₹4.00 Cr CapEx in MIDC Chakan Phase II, Maharashtra), your statutory financial optimization strategy focuses on central credit and customs programs: **₹5.00 Crore CGTMSE** collateral-free financing (85% sovereign guarantee), **0% EPCG customs duty** on brewery plant imports, **Section 80-IAC** 3-year corporate income tax holidays, and **5-year electricity duty exemptions** under Udyam. While direct state SGST cash grants are restricted under Maharashtra PSI-2019 Annexure II, these combined central programs save over **₹75 Lakhs in capital and tax outlays**.`,
+    answer: `For **${project.name}** (${project.investmentFormatted || '₹25.00 Cr'} CapEx in **${project.district}, ${project.state}**), your statutory financial optimization strategy leverages central credit guarantees and state industrial incentives: **₹5.00 Crore CGTMSE** collateral-free financing (85% sovereign guarantee), **0% EPCG customs duty** on capital goods, **Section 80-IAC** 3-year corporate income tax holidays, and **electricity duty exemptions** under ${project.state} Industrial Policy. These combined programs unlock over **₹75 Lakhs to ₹1.5 Crore in capital, power, and tax savings**.`,
     relevantSchemes: ['MSME-CGTMSE-001', 'DGFT-EPCG-001', 'STARTUP-80IAC-001', 'MSME-ZED-001', 'MSME-UDYAM-001'],
     actionableSteps: [
-      'Maintain active Udyam Small Enterprise certification for bank credit and utility concessions',
+      'Maintain active Udyam Manufacturing Enterprise certification for bank credit and utility concessions',
       'Apply for EPCG 0% duty authorization prior to foreign equipment shipments',
       'Submit CGTMSE collateral-free loan dossier with audited 7-year DSCR financial model',
     ],
-    confidenceScore: 0.94,
+    confidenceScore: 0.95,
     sourceAttribution: 'ApprovalIQ Statutory Regulatory Knowledge Base & MSME Policy Framework',
     timestamp: new Date().toISOString(),
   };
 }
 
-export function getDemoDocuments(projectId: string = DEMO_PROJECT_ID): Document[] {
-  return [
-    {
-      id: 'doc-01',
-      projectId,
-      documentDefinitionId: 'def-pan',
-      documentDefinitionCode: 'DOC-PAN',
-      documentDefinitionManualOverride: false,
-      metadata: { entityName: 'Pune Craft Brewery Pvt Ltd', panNumber: 'AABCP1234D' },
-      currentVersion: {
-        id: 'ver-01',
-        versionNumber: 1,
-        storageKey: 'docs/pan.pdf',
-        originalFilename: 'Company_PAN_Certificate.pdf',
-        mimeType: 'application/pdf',
-        sizeBytes: 245000,
-        fileHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        uploadedByUserId: 'usr-applicant',
-        uploadedAt: '2026-09-20T10:00:00Z',
-        state: 'verified',
-      },
-      createdAt: '2026-09-20T10:00:00Z',
-      updatedAt: '2026-09-20T10:00:00Z',
-    },
-    {
-      id: 'doc-02',
-      projectId,
-      documentDefinitionId: 'def-cin',
-      documentDefinitionCode: 'DOC-CIN',
-      documentDefinitionManualOverride: false,
-      metadata: { cin: 'U15549PN2026PTC123456' },
-      currentVersion: {
-        id: 'ver-02',
-        versionNumber: 1,
-        storageKey: 'docs/cin.pdf',
-        originalFilename: 'Certificate_of_Incorporation_MCA.pdf',
-        mimeType: 'application/pdf',
-        sizeBytes: 520000,
-        fileHash: 'f4c8996fb92427ae41e4649b934ca495991b7852b855e3b0c44298fc1c149afb',
-        uploadedByUserId: 'usr-applicant',
-        uploadedAt: '2026-09-20T10:05:00Z',
-        state: 'verified',
-      },
-      createdAt: '2026-09-20T10:05:00Z',
-      updatedAt: '2026-09-20T10:05:00Z',
-    },
-    {
-      id: 'doc-03',
-      projectId,
-      documentDefinitionId: 'def-site-plan',
-      documentDefinitionCode: 'DOC-SITE-PLAN',
-      documentDefinitionManualOverride: false,
-      metadata: { architect: 'S. Patil & Associates', scale: '1:100' },
-      currentVersion: {
-        id: 'ver-03',
-        versionNumber: 1,
-        storageKey: 'docs/site_layout.pdf',
-        originalFilename: 'MIDC_Chakan_Site_Layout_Drawing.pdf',
-        mimeType: 'application/pdf',
-        sizeBytes: 1850000,
-        fileHash: '934ca495991b7852b855e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b',
-        uploadedByUserId: 'usr-applicant',
-        uploadedAt: '2026-09-21T11:20:00Z',
-        state: 'verified',
-      },
-      createdAt: '2026-09-21T11:20:00Z',
-      updatedAt: '2026-09-21T11:20:00Z',
-    },
-    {
-      id: 'doc-04',
-      projectId,
-      documentDefinitionId: 'def-water-test',
-      documentDefinitionCode: 'DOC-WATER-TEST',
-      documentDefinitionManualOverride: false,
-      metadata: { standard: 'IS 10500:2012', lab: 'NABL Accredited Water Lab' },
-      currentVersion: {
-        id: 'ver-04',
-        versionNumber: 1,
-        storageKey: 'docs/water_report.pdf',
-        originalFilename: 'Potable_Water_Test_IS10500.pdf',
-        mimeType: 'application/pdf',
-        sizeBytes: 410000,
-        fileHash: 'b855e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852',
-        uploadedByUserId: 'usr-applicant',
-        uploadedAt: '2026-09-22T09:15:00Z',
-        state: 'verified',
-      },
-      createdAt: '2026-09-22T09:15:00Z',
-      updatedAt: '2026-09-22T09:15:00Z',
-    },
-  ];
-}
-
-export function getDemoInspectionsCandidates(_projectId: string = DEMO_PROJECT_ID): InspectionCandidatesResponse {
-  return {
-    candidates: [
-      {
-        stage: 'pre_construction',
-        stageTitle: 'Pre-Construction Joint Site Inspection',
-        stageDescription: 'Synchronized physical site inspection by MPCB and MIDC Fire Services to verify boundary coordinates, water source, and egress plans.',
-        recommendedTimeframe: 'Day 10–14 of application filing',
-        leadAuthorityCode: 'AUTH-MPCB',
-        leadAuthorityName: 'Maharashtra Pollution Control Board',
-        participatingApprovals: [
-          {
-            approvalCode: 'MPCB-CTE-001',
-            approvalName: 'Consent to Establish (CTE)',
-            authorityCode: 'AUTH-MPCB',
-            authorityName: 'Maharashtra Pollution Control Board',
-            inspectionMandate: 'Physical verification of industrial zoning, ETP location, and effluent discharge point.',
-            checklistTemplate: [],
-          },
-          {
-            approvalCode: 'FIRE-PROVISIONAL-001',
-            approvalName: 'Provisional Fire NOC',
-            authorityCode: 'AUTH-FIRE',
-            authorityName: 'MIDC Fire Services Department',
-            inspectionMandate: 'Verification of approach road width (min 6 meters) and static water reservoir coordinates.',
-            checklistTemplate: [],
-          },
-        ],
-        readinessRequirements: [
-          { id: 'req-1', title: 'Site Boundary Demarcated', description: 'Physical perimeter coordinates verified', completed: true },
-          { id: 'req-2', title: 'MIDC Water Connection Point Accessible', description: 'Utility junction identified', completed: true },
-          { id: 'req-3', title: 'Architectural Blueprint Available Onsite', description: 'Stamped engineering drawing on site', completed: false },
-        ],
-        estimatedVisitsSaved: 1,
-        estimatedDaysSaved: 20,
-      },
-    ],
-    summary: {
-      totalSeparateVisits: 3,
-      consolidatedJointVisits: 1,
-      visitsSaved: 2,
-      totalDaysSaved: 25,
-    },
-  };
-}
-
-export function getDemoJointInspections(projectId: string = DEMO_PROJECT_ID): JointInspectionView[] {
-  return [
-    {
-      id: 'insp-demo-01',
-      projectId,
-      title: 'Joint Site & Environmental Verification Inspection',
-      stage: 'pre_construction',
-      status: 'scheduled',
-      scheduledDate: '2026-11-05',
-      timeSlot: '11:00 AM - 01:00 PM',
-      premisesAddress: 'Plot No. PAP-A-12, MIDC Phase II, Chakan, Pune, Maharashtra 410501',
-      leadAuthorityCode: 'AUTH-MPCB',
-      leadAuthorityName: 'Maharashtra Pollution Control Board',
-      notes: 'Consolidated inspection scheduled under Ease of Doing Business protocol.',
-      readinessChecklist: [
-        { id: 'chk-1', title: 'Site Boundary & Access Road Clear (min 6m)', description: 'Approach road clear for emergency vehicles', completed: true },
-        { id: 'chk-2', title: 'Effluent Treatment Plant (ETP) Demarcation', description: 'Civil foundation coordinates staked', completed: true },
-        { id: 'chk-3', title: 'Fire Hydrant & Water Reservoir Plan Onsite', description: 'Static reservoir drawings present', completed: false },
-      ],
-      rectificationPlan: null,
-      jointReportSummary: 'Consolidated inspection scheduled under Ease of Doing Business protocol.',
-      participatingApprovals: [],
-      inspectorChecklists: [],
-      createdAt: '2026-10-15T10:00:00Z',
-      updatedAt: '2026-10-18T12:00:00Z',
-    },
-  ];
-}
-
-export function getDemoClarifications(_projectId: string = DEMO_PROJECT_ID): ClarificationsInbox {
-  return {
-    projectId: _projectId,
-    total: 0,
-    openCount: 0,
-    awaitingApplicantCount: 0,
-    countsByStatus: {
-      requested: 0,
-      responded: 0,
-      resolved: 0,
-      cancelled: 0,
-    },
-    clarifications: [],
-  };
-}
-
-/**
- * Intelligent client-side statutory answer generator for Approve Voice Assistant
- */
-/**
- * Intelligent client-side statutory answer generator for Approve Voice Assistant
- */
-
-/**
- * Attempt a live LLM call if the user or environment has configured an AI API key.
- */
 async function tryLiveLlmAnswer(
   query: string,
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  projectId: string = DEMO_PROJECT_ID,
 ): Promise<AssistantChatResponse | null> {
   if (typeof window === 'undefined') return null;
   const apiKey =
@@ -1190,14 +269,15 @@ async function tryLiveLlmAnswer(
 
   if (!apiKey) return null;
 
+  const project = getStoredProjectById(projectId);
+  const dataset = getAiProjectDataset(projectId);
   const systemPrompt = `You are "Approve", the dedicated intelligent Voice Assistant and Statutory Compliance Copilot for ApprovalIQ (India's industrial single-window clearance intelligence platform).
-The active facility is "Pune Craft Brewery":
-- Location: 6,000 sq.ft. leased industrial shed in MIDC Chakan Phase II, Taluka Khed, District Pune, Maharashtra.
-- Capital Outlay: ₹4.00 Crore, 25 full-time personnel.
-- Industry: Craft Beer Brewing, Fermentation & Bottling (Orange Category under MPCB).
-- Statutory Clearances: 10 Total. 3 Ready to file (DISH Factory Building Plan, MPCB Consent to Establish, Provisional Fire NOC), 1 In Review (State Excise BRL-001), 3 Blocked by prerequisites (MPCB CTO, Final Fire NOC, DISH Factory Licence).
-- Key Regulations: Maharashtra Right to Services (RTS) Act 2015 (strict SLAs, deemed approval clauses), Factories Act 1948, Food Safety and Standards (Alcoholic Beverages) Regulations 2018, Legal Metrology (Packaged Commodities) Rules 2011 Rule 27.
-- Fiscal Schemes: Eligible for ₹5.00 Cr CGTMSE collateral-free guarantee, 0% customs duty on equipment under EPCG, Section 80-IAC 3-year tax holiday, MSME ZED 80% subsidy. Excluded from direct state cash subsidies under Maharashtra PSI 2019 Annexure II negative list (Item 4).
+The active facility is "${project.name}":
+- Location: ${project.district}, ${project.state} (${project.areaSqft || 25000} sq.ft. industrial facility).
+- Capital Outlay: ${project.investmentFormatted || "₹25.00 Crore"}, ${project.workforceCount || 80} full-time personnel.
+- Industry: ${project.industry} (${dataset.cpcbCategory} Category under ${dataset.roadmap.nodes[0]?.authority?.name || "State SPCB"}).
+- Statutory Clearances: ${dataset.roadmap.nodes.length} Total with RTS SLA deemed-approval protection.
+- Fiscal Schemes: Eligible for ₹5.00 Cr CGTMSE collateral-free guarantee, 0% customs duty under EPCG, Section 80-IAC 3-year tax holiday, MSME ZED green subsidy, and ${project.state} Industrial Policy concessions.
 
 Respond directly, accurately, and authoritatively to the user's question with specific statutory rules, authority names, technical standards, or legal procedures. Keep the tone professional, encouraging, and clear.
 Return a valid JSON object in this format:
@@ -1262,7 +342,10 @@ Return a valid JSON object in this format:
  * Never returns a canned greeting menu. Parses the user's intent and delivers an authoritative,
  * project-grounded statutory reply.
  */
-function synthesizeDynamicReasoning(message: string, _projectId: string): AssistantChatResponse {
+function synthesizeDynamicReasoning(message: string, projectId: string = DEMO_PROJECT_ID): AssistantChatResponse {
+  const project = getStoredProjectById(projectId);
+  const dataset = getAiProjectDataset(projectId);
+  const jurisdiction = getStateJurisdiction(project.state);
   const cleanQ = message.trim();
   const lower = cleanQ.toLowerCase();
 
@@ -1272,28 +355,30 @@ function synthesizeDynamicReasoning(message: string, _projectId: string): Assist
     .split(/\s+/)
     .filter((w) => w.length > 2 && !/^(the|and|for|what|how|why|can|will|should|with|about|tell|give|please|there|this|that|your|from|into|onto|have|does|when|where|which|who)$/.test(w));
 
-  const subjectPhrase = tokens.slice(0, 4).join(' ') || 'regulatory operations';
+  const subjectPhrase = tokens.slice(0, 4).join(' ') || 'statutory compliance';
+  const topClearances = dataset.roadmap.nodes.slice(0, 3);
+  const authorityNames = Array.from(new Set(topClearances.map(n => n.authority?.name).filter(Boolean))).join(', ') || jurisdiction.spcbName;
 
   return {
     reply: [
       `### ⚖️ Statutory & Compliance Assessment: ${cleanQ}`,
       '',
-      `For your **Pune Craft Brewery** facility (6,000 sq.ft. leased shed in **MIDC Chakan Phase II, Pune**, ₹4.00 Cr CapEx, 25 employees, Orange Category Fermentation):`,
+      `For your **${project.name}** facility (${project.district}, ${project.state}, ${project.investmentFormatted || "₹25.00 Cr"} CapEx, ${project.workforceCount || 80} employees, **${dataset.cpcbCategory} Category** under CPCB standards):`,
       '',
-      `1. **Statutory Stance & Feasibility**:`,
-      `   - Commercial craft brewing and bottling in Maharashtra operates under a dual jurisdiction: **Maharashtra State Excise** (manufacturing integrity & revenue passes) and the **Directorate of Industrial Safety & Health (DISH)** / **MPCB** (occupational safety & pollution limits).`,
-      `   - Any operational or facility modification relating to **"${subjectPhrase}"** must conform strictly to your approved site layout drawings and the conditions of **Form BRL-001** (State Excise) and **Consent to Establish (CTE)**.`,
+      `1. **Statutory Stance & Sector Feasibility**:`,
+      `   - Establishing and operating this **${project.industry}** facility requires mandatory synchronized clearances across environmental control (**${jurisdiction.spcbName}**), industrial workplace safety (**${jurisdiction.dishName}**), and district industrial authorities.`,
+      `   - Any technical specifications, machinery deployment, or process parameters relating to **"${subjectPhrase}"** must strictly align with your approved layout drawings and statutory filings submitted on **${jurisdiction.singleWindowPortal}**.`,
       '',
-      `2. **Regulatory Authority & Filing Protocols**:`,
-      `   - **Competent Authorities**: Maharashtra Pollution Control Board (SRO Pune-II), MIDC Special Planning Authority (SPA), and Commissioner of State Excise, Maharashtra.`,
-      `   - Under the **Maharashtra Right to Services (RTS) Act 2015**, statutory changes or endorsements carry binding SLA timelines (15 to 45 working days) with statutory deemed-approval safeguards.`,
+      `2. **Regulatory Authority & Binding SLAs**:`,
+      `   - **Competent Regulatory Bodies**: ${authorityNames}, and **${jurisdiction.fireDeptName}**.`,
+      `   - Statutory applications processed through **${jurisdiction.singleWindowPortal}** are protected by the **${jurisdiction.rtsActName}** with binding statutory SLA timelines and legal deemed-approval safeguards.`,
       '',
       `3. **Immediate Recommended Action Steps**:`,
-      `   - 📋 Ensure all technical specifications, equipment ratings, and floor layouts are uploaded to your **Document Vault**.`,
-      `   - 🔄 File statutory filings through the **MAITRI Single Window portal** to trigger synchronized statutory time clocks.`,
-      `   - 💼 Verify with your chartered engineer that all installations preserve your **₹5.00 Cr CGTMSE** loan covenants and zero-liquid-discharge (ZLD) effluent parameters.`,
+      `   - 📋 Ensure technical equipment ratings, P&ID flows, and certified building layouts are uploaded to your **Document Vault**.`,
+      `   - 🔄 Track and file statutory prerequisites through **${jurisdiction.singleWindowPortal}** to advance your clearance critical path.`,
+      `   - 💼 Maximize eligible fiscal benefits including **₹5.00 Cr CGTMSE** collateral-free credit guarantees, **EPCG 0% customs duty**, and ${jurisdiction.electricityDutyYears}-year electricity duty waivers under **${jurisdiction.industrialPolicyName}**.`,
     ].join('\n'),
-    spokenText: `Regarding ${subjectPhrase} for your Pune Craft Brewery in MIDC Chakan, this falls under State Excise, DISH, and MPCB compliance. All technical specifications must align with your approved layout drawings and MAITRI single window filings, protected by Maharashtra Right to Services Act SLAs.`,
+    spokenText: `Regarding ${subjectPhrase} for your ${project.name} in ${project.district}, ${project.state}, this falls under statutory state and environmental compliance. All technical specifications must align with your single window filings on ${jurisdiction.singleWindowPortal}, protected by ${jurisdiction.rtsActName} SLAs.`,
     mode: 'offline',
     actions: [
       { type: 'navigate', target: 'roadmap', label: 'View Roadmap' },
@@ -1312,6 +397,9 @@ function synthesizeStatutoryAnswer(
   message: string,
   _projectId: string = DEMO_PROJECT_ID,
 ): AssistantChatResponse {
+  const project = getStoredProjectById(_projectId);
+  const dataset = getAiProjectDataset(_projectId);
+  const jurisdiction = getStateJurisdiction(project.state);
   const q = message.toLowerCase();
 
   // 1. Navigation Commands
@@ -1376,21 +464,24 @@ function synthesizeStatutoryAnswer(
 
   // 2. Project Overview & Scope
   if (/\b(what.*is.*(the|a|my|this)?\s*project|about.*(the|a|my|this)?\s*project|project.*summary|tell me about|explain.*project|what are we building|project overview|my project|describe.*project)\b/i.test(q)) {
+    const readyNodes = dataset.roadmap.nodes.filter(n => n.status === 'available');
+    const inReviewNodes = dataset.roadmap.nodes.filter(n => n.status === 'in_progress');
+    const blockedNodes = dataset.roadmap.nodes.filter(n => n.status === 'blocked');
     return {
       reply: [
-        '### 🏭 Pune Craft Brewery (MIDC Chakan Phase II, Pune, Maharashtra)',
+        `### 🏭 ${project.name} (${project.district}, ${project.state})`,
         '',
-        '- **Facility Scope**: 6,000 sq.ft. leased industrial shed in MIDC Chakan Phase II, Taluka Khed, District Pune.',
-        '- **Project Outlay & Team**: ₹4.00 Crore capital investment, 25 full-time personnel (18 plant operations, 7 administration).',
-        '- **Industrial Classification**: Orange Category Fermentation & Potable Beer Manufacturing under MPCB norms.',
-        '- **Statutory Clearances (10 Total)**:',
-        '  - 🟢 **Ready for Immediate Submission (3)**: DISH Factory Building Plan Approval (Rule 3), MPCB Consent to Establish (CTE), and Provisional Fire NOC.',
-        '  - 🟡 **In Review (1)**: State Excise Brewery & Bottling Licence (Form BRL-001, App ID: EX-BRL-2026-088).',
-        '  - 🔴 **Blocked by Prerequisites (3)**: MPCB Consent to Operate (CTO), Final Fire NOC, and DISH Factory Licence.',
-        '- **Statutory Timelines**: 45 to 65 working days governed by Maharashtra Right to Services (RTS) Act SLAs.',
-        '- **Government Fee Outlay**: ₹1,85,000 to ₹2,40,000 in official statutory fees.',
+        `- **Facility Scope**: ${project.areaSqft || 25000} sq.ft. industrial facility in ${project.district}, ${project.state}.`,
+        `- **Project Outlay & Team**: ${project.investmentFormatted || '₹25.00 Crore'} capital investment, ${project.workforceCount || 80} full-time personnel.`,
+        `- **Industrial Classification**: ${dataset.cpcbCategory} Category (${project.industry}) under ${jurisdiction.spcbName} norms.`,
+        `- **Statutory Clearances (${dataset.roadmap.nodes.length} Total)**:`,
+        `  - 🟢 **Ready for Immediate Submission (${readyNodes.length})**: ${readyNodes.slice(0, 3).map(n => n.shortName || n.approvalName).join(', ') || 'Initial single-window filings'}.`,
+        `  - 🟡 **In Review (${inReviewNodes.length})**: ${inReviewNodes.map(n => n.shortName || n.approvalName).join(', ') || 'No approvals currently in review'}.`,
+        `  - 🔴 **Blocked by Prerequisites (${blockedNodes.length})**: ${blockedNodes.slice(0, 3).map(n => n.shortName || n.approvalName).join(', ') || 'None'}.`,
+        `- **Statutory Timelines**: Governed by **${jurisdiction.rtsActName}** binding SLAs via ${jurisdiction.singleWindowPortal}.`,
+        `- **Government Fee Outlay**: Scaled statutory fees with transparent single-window challan receipts.`,
       ].join('\n'),
-      spokenText: 'Your project Pune Craft Brewery is a 6,000 square foot craft brewery and bottling facility in MIDC Chakan, Pune, Maharashtra. It requires 10 statutory clearances, with 3 ready for immediate filing, 1 in review, and 3 blocked by prerequisites. Clearances are tracked against Maharashtra Right to Services SLAs.',
+      spokenText: `Your project ${project.name} is a ${project.areaSqft || 25000} square foot ${project.industry} facility in ${project.district}, ${project.state}. It requires ${dataset.roadmap.nodes.length} statutory clearances, with ${readyNodes.length} ready for immediate filing and ${blockedNodes.length} blocked by prerequisites. Clearances are protected by ${jurisdiction.rtsActName} SLAs.`,
       mode: 'offline',
       actions: [
         { type: 'navigate', target: 'roadmap', label: 'View Roadmap' },
@@ -1401,18 +492,19 @@ function synthesizeStatutoryAnswer(
 
   // 3. Blocked Clearances & Prerequisites / Bottlenecks
   if (/blocked|prerequisite|why.*block|stuck|bottleneck|waiting for|dependency|dependencies/.test(q)) {
+    const blockedNodes = dataset.roadmap.nodes.filter(n => n.status === 'blocked');
+    const readyNodes = dataset.roadmap.nodes.filter(n => n.status === 'available');
     return {
       reply: [
         '### 🛑 Blocked Clearances & Prerequisite Dependencies',
         '',
-        '1. **MPCB Consent to Operate (CTO-001)**: Strictly gated by **MPCB Consent to Establish (CTE)** and physical commissioning of your 15–20 KLD Effluent Treatment Plant (ETP).',
-        '2. **Final Fire Safety Certificate (Final Fire NOC)**: Gated by **Provisional Fire NOC** and submission of Form A/B compliance certificate certifying hydro-testing of hydrants and sprinkler response.',
-        '3. **DISH Factory Operational Licence**: Gated by **DISH Building Plan Approval** under Rule 3 of Maharashtra Factories Rules and physical plant erection.',
-        '4. **Excise Brand & Label Registration**: Gated by issuance of primary **Excise Brewery Licence (BRL-001)**.',
+        ...(blockedNodes.length > 0
+          ? blockedNodes.map((n, i) => `${i + 1}. **${n.approvalName}**: Gated by mandatory prerequisite filings and physical site milestones.`)
+          : ['No clearances are currently blocked. You can proceed with all available filings in parallel.']),
         '',
-        'Filing your 3 available applications (DISH Plan, MPCB CTE, Provisional Fire) unlocks the critical path to unblock these operations.',
+        `Filing your ${readyNodes.length} available clearance applications unblocks the critical path on ${jurisdiction.singleWindowPortal}.`,
       ].join('\n'),
-      spokenText: 'You currently have 3 blocked clearances. For instance, your MPCB Consent to Operate is blocked until Consent to Establish is issued, and your Final Fire NOC requires prior Provisional Fire clearance and physical construction completion.',
+      spokenText: `You currently have ${blockedNodes.length} blocked clearances for ${project.name}. Filing your available clearances will systematically unblock downstream permits under ${jurisdiction.rtsActName} SLAs.`,
       mode: 'offline',
       actions: [{ type: 'navigate', target: 'roadmap', label: 'Open Approval Roadmap' }],
     };
@@ -1420,20 +512,19 @@ function synthesizeStatutoryAnswer(
 
   // 4. Immediate Priority Actions / What To Do Next
   if (/pending|next|what to do|available|status|action|priority|todo|where to start|first step/.test(q)) {
+    const readyNodes = dataset.roadmap.nodes.filter(n => n.status === 'available');
     return {
       reply: [
         '### 📋 Immediate Priority Action Plan',
         '',
-        '1. **Submit 3 Available Clearances in Parallel**:',
-        '   - **DISH Factory Plan Approval**: Directorate of Industrial Safety & Health (30-day RTS SLA).',
-        '   - **MPCB Consent to Establish (CTE)**: Orange category pollution consent (45-day RTS SLA).',
-        '   - **Provisional Fire NOC**: MIDC Fire Services building drawing clearance (15-day RTS SLA).',
+        '1. **Submit Available Clearances in Parallel**:',
+        ...(readyNodes.slice(0, 3).map(n => `   - **${n.approvalName}**: ${n.authority?.name || jurisdiction.spcbName} (${n.slaDays || 30}-day ${jurisdiction.rtsActName} SLA).`)),
         '2. **Complete Document Vault**:',
-        '   - Upload your registered **MIDC Lease Deed** and **ETP Process Flow & P&ID Diagram**.',
-        '3. **Secure Financial Guarantee**:',
-        '   - Submit your loan dossier for the **₹5.00 Cr CGTMSE** collateral-free credit facility through SIDBI/SBI.',
+        `   - Upload your registered land/lease deed and technical engineering drawings to the Document Vault.`,
+        '3. **Secure Financial Guarantee & Incentives**:',
+        `   - Leverage central CGTMSE ₹5.00 Cr credit cover and state incentives under ${jurisdiction.industrialPolicyName}.`,
       ].join('\n'),
-      spokenText: 'Your next steps are to submit the 3 available clearances: DISH Factory Plan Approval, MPCB Consent to Establish, and Provisional Fire NOC. Also, upload your registered MIDC lease deed and ETP flow diagram to your Document Vault.',
+      spokenText: `Your immediate next steps for ${project.name} are to submit your ${readyNodes.length} available clearances on ${jurisdiction.singleWindowPortal}, upload mandatory layout documents to your Document Vault, and apply for eligible state subsidies.`,
       mode: 'offline',
       actions: [
         { type: 'navigate', target: 'roadmap', label: 'Start Applications' },
@@ -2087,7 +1178,7 @@ export async function generateApproveClientAnswer(
   _projectId: string = DEMO_PROJECT_ID,
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
 ): Promise<AssistantChatResponse> {
-  const liveResult = await tryLiveLlmAnswer(message, history);
+  const liveResult = await tryLiveLlmAnswer(message, history, _projectId);
   if (liveResult) return liveResult;
 
   return synthesizeStatutoryAnswer(message, _projectId);

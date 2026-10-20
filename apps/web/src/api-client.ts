@@ -504,7 +504,7 @@ export const roadmapApi = {
       `/projects/${projectId}/approval-instances/${instanceId}/status`,
       { status },
       { token },
-    ).catch(() => updateDemoInstanceStatus(instanceId, status));
+    ).catch(() => updateDemoInstanceStatus(instanceId, status, projectId));
   },
   /** GET /projects/:projectId/schemes/ai-analysis — dynamic AI analysis & readiness score */
   getAiSchemeAnalysis(projectId: string, token?: string): Promise<AiSchemeAnalysisResponse> {
@@ -526,7 +526,7 @@ export const roadmapApi = {
       `/projects/${projectId}/schemes/ai-chat`,
       { query, history, apiKey, model, baseUrl },
       { token },
-    ).catch(() => getDemoAiSchemeAdvisorAnswer(query));
+    ).catch(() => getDemoAiSchemeAdvisorAnswer(query, projectId));
   },
   /** PATCH /projects/:projectId/roadmap/batch-status — atomic single-transaction batch update */
   batchUpdateStatus(
