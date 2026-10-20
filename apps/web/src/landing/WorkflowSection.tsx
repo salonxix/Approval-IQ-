@@ -33,23 +33,23 @@ export const WorkflowSection: React.FC = () => {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 lg:py-24 bg-ocean-50/50 border-b border-ocean-200/80 relative overflow-hidden">
+    <section id="how-it-works" className="py-20 lg:py-24 bg-transparent border-b border-cyan-900/30 text-white relative overflow-hidden">
       {/* Background Subtle Gradient Blobs */}
-      <div className="absolute top-1/2 left-0 w-72 h-72 bg-ocean-200/30 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-1/2 right-0 w-72 h-72 bg-ocean-300/20 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/2 left-0 w-72 h-72 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/2 right-0 w-72 h-72 bg-teal-400/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-2.5">
-          <span className="stamp-seal stamp-approved text-[10px] shadow-sm">
-            <Sparkles className="w-3 h-3 text-forest-600 inline mr-1" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 shadow-sm">
+            <Sparkles className="w-3 h-3 text-cyan-300 inline mr-1" />
             {t('workflow.tag', 'THE STATUTORY COMPLIANCE ARCHITECTURE')}
           </span>
-          <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-ink tracking-tight">
+          <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
             {t('workflow.title', 'How ApprovalIQ Solves the Regulatory Maze')}
           </h2>
-          <p className="text-xs sm:text-sm text-ink-soft leading-relaxed">
+          <p className="text-xs sm:text-sm text-cyan-100/80 leading-relaxed">
             {t('workflow.subtitle', 'A 4-stage deterministic process eliminating redundant submissions and unblocking critical path approvals.')}
           </p>
         </div>
@@ -59,28 +59,28 @@ export const WorkflowSection: React.FC = () => {
           {WORKFLOW_STEPS.map((step) => (
             <div
               key={step.step}
-              className="editorial-card p-5 bg-white flex flex-col justify-between space-y-4 hover:border-ocean-400 hover:shadow-glow-cyan/20 transition-all duration-300 group"
+              className="bg-[#05212C]/80 backdrop-blur-2xl rounded-2xl border border-cyan-500/30 p-5 flex flex-col justify-between space-y-4 hover:border-cyan-400/60 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all duration-300 group hover:scale-[1.02]"
             >
               <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-ocean-100 pb-2.5">
-                  <span className="font-mono text-xs font-bold text-ocean-600">
+                <div className="flex items-center justify-between border-b border-cyan-900/40 pb-2.5">
+                  <span className="font-mono text-xs font-bold text-cyan-300">
                     {step.badge}
                   </span>
-                  <span className="font-mono text-lg font-bold text-ocean-300 group-hover:text-ocean-500 transition-colors">
+                  <span className="font-mono text-lg font-bold text-cyan-500/60 group-hover:text-cyan-300 transition-colors">
                     {step.step}
                   </span>
                 </div>
-                <h3 className="font-editorial text-base font-bold text-ink leading-snug group-hover:text-ocean-950">
+                <h3 className="font-editorial text-base font-bold text-white leading-snug">
                   {step.title}
                 </h3>
-                <p className="text-xs text-ink-soft leading-relaxed font-sans">
+                <p className="text-xs text-cyan-200/80 leading-relaxed font-sans">
                   {step.desc}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-ocean-100 flex items-center justify-between text-[11px] font-mono text-ocean-700">
+              <div className="pt-3 border-t border-cyan-900/40 flex items-center justify-between text-[11px] font-mono text-cyan-300">
                 <span>Statutory Rule Validated</span>
-                <CheckCircle2 className="w-3.5 h-3.5 text-forest-500" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               </div>
             </div>
           ))}

@@ -34,46 +34,46 @@ export const DynamicScrollBackground: React.FC = () => {
       <div
         className="absolute inset-0 transition-opacity duration-700 ease-out"
         style={{
-          background: `radial-gradient(ellipse at 50% ${20 + scrollRatio * 60}%, rgba(14, 139, 178, ${0.12 + scrollRatio * 0.08}) 0%, rgba(8, 83, 117, ${0.08 + scrollRatio * 0.06}) 45%, rgba(6, 33, 43, 0.04) 100%)`,
+          background: `radial-gradient(ellipse at 50% ${20 + scrollRatio * 60}%, rgba(14, 165, 150, ${0.16 + scrollRatio * 0.08}) 0%, rgba(8, 92, 100, ${0.12 + scrollRatio * 0.06}) 45%, rgba(4, 28, 36, 0.08) 100%)`,
         }}
       />
 
-      {/* Floating Animated Radiant Orb 1 (Top Left / Marine to Aqua) */}
+      {/* Floating Animated Radiant Orb 1 (Top Left / Deep Marine to Emerald) */}
       <div
-        className="absolute w-[36rem] h-[36rem] rounded-full blur-[90px] transition-all duration-700 ease-out"
+        className="absolute w-[38rem] h-[38rem] rounded-full blur-[90px] transition-all duration-700 ease-out"
         style={{
           left: `${orb1X}%`,
           top: `${orb1Y}%`,
           transform: 'translate(-50%, -50%)',
           background: scrollRatio < 0.5
-            ? 'radial-gradient(circle, rgba(14, 139, 178, 0.35) 0%, rgba(8, 83, 117, 0.15) 60%, transparent 80%)'
-            : 'radial-gradient(circle, rgba(56, 172, 204, 0.40) 0%, rgba(14, 139, 178, 0.18) 60%, transparent 80%)',
+            ? 'radial-gradient(circle, rgba(14, 165, 150, 0.38) 0%, rgba(9, 90, 95, 0.18) 60%, transparent 80%)'
+            : 'radial-gradient(circle, rgba(52, 211, 153, 0.40) 0%, rgba(14, 165, 150, 0.20) 60%, transparent 80%)',
         }}
       />
 
-      {/* Floating Animated Radiant Orb 2 (Top Right / Deep Oceanic to Luminous Sky Aqua) */}
+      {/* Floating Animated Radiant Orb 2 (Top Right / Teal to Emerald Luminous Light) */}
       <div
-        className="absolute w-[40rem] h-[40rem] rounded-full blur-[110px] transition-all duration-700 ease-out"
+        className="absolute w-[44rem] h-[44rem] rounded-full blur-[110px] transition-all duration-700 ease-out"
         style={{
           left: `${orb2X}%`,
           top: `${orb2Y}%`,
           transform: 'translate(-50%, -50%)',
           background: scrollRatio < 0.5
-            ? 'radial-gradient(circle, rgba(56, 172, 204, 0.30) 0%, rgba(10, 49, 64, 0.15) 70%, transparent 85%)'
-            : 'radial-gradient(circle, rgba(126, 203, 224, 0.38) 0%, rgba(56, 172, 204, 0.20) 65%, transparent 85%)',
+            ? 'radial-gradient(circle, rgba(10, 147, 138, 0.35) 0%, rgba(6, 40, 48, 0.18) 70%, transparent 85%)'
+            : 'radial-gradient(circle, rgba(34, 211, 238, 0.38) 0%, rgba(16, 185, 129, 0.22) 65%, transparent 85%)',
         }}
       />
 
-      {/* Floating Animated Radiant Orb 3 (Center Lower / Radiant Cyan) */}
+      {/* Floating Animated Radiant Orb 3 (Center Lower / Radiant Cyan Emerald) */}
       <div
-        className="absolute w-[42rem] h-[42rem] rounded-full blur-[120px] transition-all duration-700 ease-out"
+        className="absolute w-[46rem] h-[46rem] rounded-full blur-[120px] transition-all duration-700 ease-out"
         style={{
           left: `${orb3X}%`,
           top: `${orb3Y}%`,
           transform: 'translate(-50%, -50%)',
           background: scrollRatio < 0.6
-            ? 'radial-gradient(circle, rgba(6, 33, 43, 0.25) 0%, rgba(8, 83, 117, 0.12) 60%, transparent 80%)'
-            : 'radial-gradient(circle, rgba(14, 139, 178, 0.32) 0%, rgba(56, 172, 204, 0.18) 60%, transparent 80%)',
+            ? 'radial-gradient(circle, rgba(8, 115, 115, 0.28) 0%, rgba(6, 40, 48, 0.15) 60%, transparent 80%)'
+            : 'radial-gradient(circle, rgba(14, 165, 150, 0.35) 0%, rgba(52, 211, 153, 0.20) 60%, transparent 80%)',
         }}
       />
 

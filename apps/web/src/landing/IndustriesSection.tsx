@@ -94,21 +94,21 @@ export const IndustriesSection: React.FC = () => {
   const current = INDUSTRIES.find((ind) => ind.id === selectedId) || INDUSTRIES[0]!;
 
   return (
-    <section id="industries" className="py-20 lg:py-24 bg-canvas border-b border-ocean-200/80 relative">
+    <section id="industries" className="py-20 lg:py-24 bg-transparent border-b border-cyan-900/30 text-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 border-b border-ocean-200/80">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-8 border-b border-cyan-900/40">
           <div className="space-y-2">
-            <span className="stamp-seal stamp-neutral text-[10px]">
-              <Sparkles className="w-3 h-3 text-ocean-500 inline mr-1" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
+              <Sparkles className="w-3 h-3 text-cyan-400 inline mr-1" />
               {t('industries.tag', 'SECTOR-SPECIFIC STATUTORY PROTOCOLS')}
             </span>
-            <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-ink tracking-tight">
+            <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
               {t('industries.title', 'Tailored for Highly Regulated Sectors')}
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-ink-soft max-w-md font-sans leading-relaxed">
+          <p className="text-xs sm:text-sm text-cyan-200/80 max-w-md font-sans leading-relaxed">
             {t('industries.subtitle', 'Explore exact statutory clearance packages, issuing authorities, and verified turnaround estimates.')}
           </p>
         </div>
@@ -125,21 +125,21 @@ export const IndustriesSection: React.FC = () => {
                   key={ind.id}
                   type="button"
                   onClick={() => setSelectedId(ind.id)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
+                  className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex items-center justify-between select-none ${
                     isSelected
-                      ? 'bg-white border-ocean-500 shadow-glow-cyan/20 translate-x-1'
-                      : 'bg-ocean-50/60 border-ocean-200/80 hover:bg-white hover:border-ocean-300'
+                      ? 'bg-[#062F3C]/95 border-cyan-400 text-white shadow-[0_0_20px_rgba(34,211,238,0.25)] translate-x-1'
+                      : 'bg-[#041B23]/70 border-cyan-900/40 text-slate-300 hover:bg-[#06242E]/80 hover:text-white'
                   }`}
                 >
                   <div className="min-w-0 pr-3">
-                    <span className="font-mono text-[10px] uppercase text-ocean-600 font-semibold block mb-0.5">
+                    <span className="font-mono text-[10px] uppercase text-cyan-400 font-semibold block mb-0.5">
                       {ind.category}
                     </span>
-                    <span className="font-semibold text-sm text-ink block truncate">
+                    <span className="font-semibold text-sm text-white block truncate">
                       {ind.name}
                     </span>
                   </div>
-                  <span className={`stamp-seal text-[9px] shrink-0 ${isSelected ? 'stamp-approved' : 'stamp-neutral'}`}>
+                  <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded border shrink-0 ${isSelected ? 'bg-cyan-950 text-cyan-300 border-cyan-400' : 'bg-transparent text-cyan-500 border-cyan-900/60'}`}>
                     {isSelected ? 'Active Sector' : 'Select'}
                   </span>
                 </button>
@@ -148,7 +148,7 @@ export const IndustriesSection: React.FC = () => {
           </div>
 
           {/* Right: Authoritative Sector Docket Card */}
-          <div className="lg:col-span-7 editorial-card p-6 bg-white space-y-5 border border-ocean-300/80 shadow-tactile-lg rounded-2xl animate-scale-in">
+          <div className="lg:col-span-7 bg-[#05212C]/90 backdrop-blur-2xl p-6 sm:p-7 space-y-5 border border-cyan-500/30 shadow-2xl rounded-3xl animate-scale-in">
             {/* Sector High-Resolution Imagery Banner */}
             <div className="relative h-44 sm:h-52 w-full rounded-xl overflow-hidden border border-ocean-200 shadow-inner group">
               <img
@@ -178,36 +178,36 @@ export const IndustriesSection: React.FC = () => {
                 </h3>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-mono text-ink-muted uppercase block">Estimated SLA</span>
-                <span className="font-mono font-bold text-xs text-ocean-700">{current.turnaroundEstimate}</span>
+                <span className="text-[10px] font-mono text-cyan-300/70 uppercase block">Estimated SLA</span>
+                <span className="font-mono font-bold text-xs text-cyan-300">{current.turnaroundEstimate}</span>
               </div>
             </div>
 
-            <p className="text-xs text-ink-soft leading-relaxed font-sans">
+            <p className="text-xs text-cyan-100/90 leading-relaxed font-sans">
               {current.description}
             </p>
 
             {/* Mandatory Approvals Checklist */}
             <div className="space-y-2">
-              <span className="text-xs font-mono font-bold text-ocean-950 uppercase tracking-wider block">
+              <span className="text-xs font-mono font-bold text-white uppercase tracking-wider block">
                 Mandatory Statutory Approvals in Sequence:
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {current.permits.map((permit, idx) => (
-                  <div key={idx} className="p-2.5 rounded-lg bg-ocean-50/60 border border-ocean-200/80 flex items-start gap-2 text-xs hover:bg-white hover:border-ocean-300 transition-colors">
-                    <span className="font-mono text-ocean-600 font-bold shrink-0">{idx + 1}.</span>
-                    <span className="font-medium text-ink leading-tight">{permit}</span>
+                  <div key={idx} className="p-2.5 rounded-xl bg-[#041B23]/70 border border-cyan-900/50 flex items-start gap-2 text-xs hover:border-cyan-500/50 transition-colors">
+                    <span className="font-mono text-cyan-400 font-bold shrink-0">{idx + 1}.</span>
+                    <span className="font-medium text-slate-200 leading-tight">{permit}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Nodal Authorities */}
-            <div className="pt-3 border-t border-ocean-200/80 flex flex-wrap items-center justify-between gap-4">
+            <div className="pt-3 border-t border-cyan-900/40 flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] font-mono text-ink-muted uppercase">Issuing Desks:</span>
+                <span className="text-[10px] font-mono text-cyan-300/70 uppercase">Issuing Desks:</span>
                 {current.keyAuthorities.map((auth, idx) => (
-                  <span key={idx} className="stamp-seal stamp-neutral text-[9px]">
+                  <span key={idx} className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/30 text-cyan-300">
                     {auth}
                   </span>
                 ))}
@@ -215,7 +215,7 @@ export const IndustriesSection: React.FC = () => {
 
               <Link
                 to="/register"
-                className="tactile-btn tactile-btn-primary px-4 py-2 text-xs font-semibold flex items-center gap-1.5 shadow-tactile hover:shadow-glow-cyan"
+                className="tactile-btn px-4 py-2 text-xs font-bold rounded-xl text-slate-950 bg-gradient-to-r from-cyan-300 to-teal-200 hover:from-white hover:to-cyan-200 border border-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.4)] flex items-center gap-1.5"
               >
                 <span>Launch {current.name} Roadmap</span>
                 <ArrowRight className="w-3.5 h-3.5" />

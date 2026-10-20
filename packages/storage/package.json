@@ -8,7 +8,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node --test test/local-storage-provider.test.ts",
+    "test": "node --experimental-strip-types --test test/local-storage-provider.test.ts",
     "test:types": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"

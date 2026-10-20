@@ -6,7 +6,6 @@ import { LoadingSpinner } from './components';
 // Code-split page components with dynamic imports
 const HomePage = lazy(() => import('./pages').then((m) => ({ default: m.HomePage })));
 const LoginPage = lazy(() => import('./pages').then((m) => ({ default: m.LoginPage })));
-const RegisterPage = lazy(() => import('./pages').then((m) => ({ default: m.RegisterPage })));
 
 const AboutPage = lazy(() => import('./landing/AboutPage').then((m) => ({ default: m.AboutPage })));
 const ContactPage = lazy(() => import('./landing/ContactPage').then((m) => ({ default: m.ContactPage })));
@@ -70,7 +69,7 @@ export const router = createRouter([
       { path: 'business-map', element: <LazyRoute><BusinessMapPage /></LazyRoute> },
       { path: 'integrations', element: <LazyRoute><IntegrationsHubPage /></LazyRoute> },
       { path: 'login', element: <LazyRoute><LoginPage /></LazyRoute> },
-      { path: 'register', element: <LazyRoute><RegisterPage /></LazyRoute> },
+      { path: 'register', element: <LazyRoute><LoginPage /></LazyRoute> },
       { path: 'auth/callback', element: <LazyRoute><AuthCallbackPage /></LazyRoute> },
       { path: 'projects', element: <LazyRoute><ProjectsPage /></LazyRoute> },
       { path: 'projects/:id/profile', element: <LazyRoute><ProjectProfilePage /></LazyRoute> },

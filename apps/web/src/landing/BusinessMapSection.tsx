@@ -1,235 +1,137 @@
 import React, { useState } from 'react';
+import { ApprovalIntelligenceNetworkMap } from './ApprovalIntelligenceNetworkMap';
+import { MappedEntity } from './geospatialDataService';
+import { ShieldCheck, CheckCircle2, ArrowRight, X, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { IndiaVectorMap, MapStateData } from './IndiaVectorMap';
-
-const INITIAL_STATES: MapStateData[] = [
-  { stateCode: 'MH', stateName: 'Maharashtra', count: 1284, percentage: 21.4, densityScore: 'very_high' },
-  { stateCode: 'KA', stateName: 'Karnataka', count: 942, percentage: 15.7, densityScore: 'very_high' },
-  { stateCode: 'GJ', stateName: 'Gujarat', count: 817, percentage: 13.6, densityScore: 'very_high' },
-  { stateCode: 'TN', stateName: 'Tamil Nadu', count: 731, percentage: 12.2, densityScore: 'high' },
-  { stateCode: 'TS', stateName: 'Telangana', count: 604, percentage: 10.1, densityScore: 'high' },
-  { stateCode: 'DL', stateName: 'Delhi NCR', count: 540, percentage: 9.0, densityScore: 'high' },
-  { stateCode: 'UP', stateName: 'Uttar Pradesh', count: 420, percentage: 7.0, densityScore: 'medium' },
-  { stateCode: 'RJ', stateName: 'Rajasthan', count: 350, percentage: 5.8, densityScore: 'medium' },
-  { stateCode: 'WB', stateName: 'West Bengal', count: 310, percentage: 5.2, densityScore: 'medium' },
-];
-
-const SUGGESTIONS = [
-  'Craft Breweries',
-  'Pharmaceuticals',
-  'Specialty Chemicals',
-  'Food Processing & FMCG',
-  'Solar & Clean Energy',
-  'Cold Storage Logistics',
-];
 
 export const BusinessMapSection: React.FC = () => {
-  const [query, setQuery] = useState('Craft Breweries');
-  const [selectedStateCode, setSelectedStateCode] = useState<string | null>('MH');
-  const [hoveredStateCode, setHoveredStateCode] = useState<string | null>(null);
-  const [states, setStates] = useState<MapStateData[]>(INITIAL_STATES);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSearch = (newQuery: string) => {
-    setQuery(newQuery);
-    setIsLoading(true);
-    setTimeout(() => {
-      // Modulate numbers based on query for realistic interactive feel
-      const multiplier = newQuery.toLowerCase().includes('pharma')
-        ? 1.6
-        : newQuery.toLowerCase().includes('chem')
-        ? 1.4
-        : newQuery.toLowerCase().includes('food')
-        ? 2.1
-        : 1.0;
-
-      const updated = INITIAL_STATES.map((st) => ({
-        ...st,
-        count: Math.round(st.count * multiplier),
-      }));
-      setStates(updated);
-      setIsLoading(false);
-    }, 400);
-  };
-
-  const activeState = states.find((s) => s.stateCode === (hoveredStateCode || selectedStateCode)) || states[0]!;
+  const [inspectedEntity, setInspectedEntity] = useState<MappedEntity | null>(null);
 
   return (
-    <section id="business-map" className="py-20 lg:py-28 bg-[#070d1e] text-white relative overflow-hidden border-t border-slate-800">
-      {/* Background glow */}
-      <div className="absolute top-1/3 left-1/3 w-[30rem] h-[30rem] bg-blue-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+    <section id="business-map" className="py-14 sm:py-20 bg-[#04161F] text-white relative overflow-hidden border-t border-cyan-500/20">
+      {/* Background ambient radial glows */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-950/90 border border-blue-800 text-blue-300 text-xs font-semibold uppercase tracking-wider mb-4">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            MAP YOUR BUSINESS
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Where Does Your Industry Live in India?
+        {/* Top Content: Clean Minimal Heading Only */}
+        <div className="text-center max-w-2xl mx-auto">
+          <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight">
+            See the approval landscape.
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-300 leading-relaxed">
-            Search any business sector, category, or niche and explore geographic density across Indian states before deciding where to establish your facility.
-          </p>
         </div>
 
-        {/* Live Search Bar + Quick Chips */}
-        <div className="max-w-3xl mx-auto mb-12">
-          <div className="relative flex items-center bg-slate-900/90 border border-slate-700/80 rounded-2xl p-2 shadow-2xl backdrop-blur-xl">
-            <svg className="w-6 h-6 text-slate-400 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search an industry, business category, or niche (e.g. craft breweries)..."
-              className="w-full bg-transparent px-3 py-2 text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none"
-            />
-            {isLoading && (
-              <div className="mr-3">
-                <span className="w-4 h-4 rounded-full border-2 border-blue-400 border-t-transparent animate-spin inline-block" />
-              </div>
-            )}
-          </div>
+        {/* Primary Visual Centerpiece: The Intelligent Network Map (Centered, 60-70% visual weight) */}
+        <div className="w-full flex justify-center max-w-[1040px] mx-auto">
+          <ApprovalIntelligenceNetworkMap
+            onExploreEntity={(entity) => setInspectedEntity(entity)}
+            className="w-full"
+          />
+        </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs">
-            <span className="text-slate-400">Popular searches:</span>
-            {SUGGESTIONS.map((item) => (
+      </div>
+
+      {/* Slide-over Verified Entity Deep Dive Drawer */}
+      {inspectedEntity && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-end p-4 sm:p-6 animate-fade-in"
+          onClick={() => setInspectedEntity(null)}
+        >
+          <div
+            className="w-full max-w-md bg-[#06212B] border border-cyan-500/40 rounded-3xl p-6 shadow-2xl space-y-5 text-white animate-slide-left relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-ocean-700/80 pb-4">
+              <div>
+                <span className="text-xs font-mono uppercase tracking-widest text-cyan-400 font-bold">
+                  {inspectedEntity.state} • {inspectedEntity.category}
+                </span>
+                <h3 className="font-editorial text-2xl font-bold text-white tracking-tight mt-1">
+                  {inspectedEntity.name}
+                </h3>
+                <div className="text-xs text-ocean-200 mt-0.5">{inspectedEntity.industry}</div>
+              </div>
               <button
-                key={item}
                 type="button"
-                onClick={() => handleSearch(item)}
-                className={`px-3 py-1 rounded-full transition-colors ${
-                  query === item
-                    ? 'bg-blue-600 text-white font-semibold'
-                    : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300'
-                }`}
+                onClick={() => setInspectedEntity(null)}
+                className="p-1.5 rounded-full hover:bg-ocean-800 text-ocean-300 hover:text-white transition-colors"
               >
-                {item}
+                <X className="w-5 h-5" />
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Interactive Map & Density Ranking Grid */}
-        <div className="bg-[#0b1329]/95 border border-slate-700/80 rounded-3xl p-6 sm:p-10 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          
-          {/* Left Column: Interactive Vector Map (7 cols) */}
-          <div className="lg:col-span-7 relative flex flex-col items-center justify-center min-h-[420px] bg-slate-950/60 rounded-2xl p-6 border border-slate-800">
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-2 text-xs font-mono text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              <span>Query: "{query}"</span>
             </div>
 
-            <IndiaVectorMap
-              states={states}
-              selectedStateCode={selectedStateCode}
-              hoveredStateCode={hoveredStateCode}
-              onSelectState={(code) => setSelectedStateCode(code)}
-              onHoverState={(code) => setHoveredStateCode(code)}
-            />
-
-            {/* Density scale legend */}
-            <div className="mt-4 flex items-center gap-2 text-[11px] text-slate-400">
-              <span>Low Density</span>
-              <div className="flex gap-1">
-                <span className="w-4 h-2.5 rounded-sm bg-[#1e3a8a]" />
-                <span className="w-4 h-2.5 rounded-sm bg-[#3b82f6]" />
-                <span className="w-4 h-2.5 rounded-sm bg-[#2563eb]" />
-                <span className="w-4 h-2.5 rounded-sm bg-[#1d4ed8]" />
-              </div>
-              <span>Very High</span>
-            </div>
-          </div>
-
-          {/* Right Column: State Intelligence Card & Rankings (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Active State Highlight Box */}
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-blue-950/60 to-slate-900 border border-blue-800/80 shadow-lg text-left space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono uppercase text-blue-400 tracking-wider">
-                  State Focus • {activeState.stateCode}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 border border-emerald-800 px-2 py-0.5 rounded-full">
-                  {activeState.densityScore.replace('_', ' ').toUpperCase()} DENSITY
+            {/* Telemetry Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-2xl bg-ocean-950/80 border border-ocean-700/60 flex flex-col gap-1">
+                <span className="text-[11px] text-ocean-300">Nodal Authority</span>
+                <span className="font-bold text-white text-sm truncate" title={inspectedEntity.authority}>
+                  {inspectedEntity.authority}
                 </span>
               </div>
 
-              <h3 className="text-2xl font-extrabold text-white">
-                {activeState.stateName}
-              </h3>
-
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-blue-400">
-                  {activeState.count.toLocaleString()}
-                </span>
-                <span className="text-xs text-slate-400">
-                  mapped places ({activeState.percentage}% of India)
-                </span>
+              <div className="p-3 rounded-2xl bg-ocean-950/80 border border-ocean-700/60 flex flex-col gap-1">
+                <span className="text-[11px] text-ocean-300">Approval Pathways</span>
+                <span className="font-bold text-cyan-300 text-sm font-mono">{inspectedEntity.pathwaysCount} active lines</span>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 text-xs text-slate-300">
-                <span className="text-slate-400">Top Hubs: </span>
-                <span>
-                  {activeState.stateCode === 'MH'
-                    ? 'Mumbai (482), Pune (316), Nagpur (141)'
-                    : activeState.stateCode === 'KA'
-                    ? 'Bengaluru (512), Mysuru (184), Mangaluru (96)'
-                    : activeState.stateCode === 'GJ'
-                    ? 'Ahmedabad (340), Surat (210), Vadodara (165)'
-                    : 'Tier-1 & Tier-2 industrial clusters'}
+              <div className="p-3 rounded-2xl bg-ocean-950/80 border border-ocean-700/60 flex flex-col gap-1">
+                <span className="text-[11px] text-ocean-300">Dependencies</span>
+                <span className="font-bold text-amber-300 text-sm font-mono">{inspectedEntity.dependenciesCount} prerequisites</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-ocean-950/80 border border-ocean-700/60 flex flex-col gap-1">
+                <span className="text-[11px] text-ocean-300">Status</span>
+                <span className="font-bold text-emerald-400 text-sm flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {inspectedEntity.status}
                 </span>
               </div>
             </div>
 
-            {/* Top States Proportion Bar List */}
-            <div className="space-y-2.5">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                Top State Concentrations
+            {/* Primary Prerequisite Clearances */}
+            <div className="space-y-2 text-xs">
+              <span className="text-[11px] font-mono text-ocean-300 uppercase tracking-wider font-bold">
+                Primary Statutory Clearance
+              </span>
+              <div className="p-3.5 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-100 flex items-center gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0" />
+                <span className="font-medium text-xs leading-snug">{inspectedEntity.topClearance}</span>
               </div>
-              {states.slice(0, 4).map((st) => (
-                <div
-                  key={st.stateCode}
-                  onClick={() => setSelectedStateCode(st.stateCode)}
-                  className={`p-2.5 rounded-xl cursor-pointer transition-all border ${
-                    selectedStateCode === st.stateCode
-                      ? 'bg-blue-900/40 border-blue-600 shadow-sm'
-                      : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800'
-                  }`}
-                >
-                  <div className="flex justify-between text-xs font-medium mb-1">
-                    <span className="text-slate-200">{st.stateName}</span>
-                    <span className="font-mono text-blue-400 font-bold">{st.count} places</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(100, (st.count / states[0]!.count) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
             </div>
 
-            {/* CTA to Full Page Business Map */}
+            {/* Source Provenance Citation */}
+            <div className="space-y-1.5 text-xs p-3.5 rounded-2xl bg-ocean-950/70 border border-ocean-800">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-ocean-300 font-mono">Public Source Register:</span>
+                <span className="font-mono text-ocean-400">Verified {inspectedEntity.lastVerified}</span>
+              </div>
+              <div className="font-semibold text-cyan-300 truncate">{inspectedEntity.source}</div>
+              <a
+                href={inspectedEntity.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-ocean-300 hover:text-cyan-300 inline-flex items-center gap-1 font-mono pt-1"
+              >
+                <span>{inspectedEntity.sourceUrl}</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            {/* Action CTA */}
             <div className="pt-2">
               <Link
-                to={`/business-map?q=${encodeURIComponent(query)}`}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition-all hover:scale-105"
+                to={`/register?state=${inspectedEntity.stateCode}&city=${encodeURIComponent(inspectedEntity.city)}&industry=${encodeURIComponent(inspectedEntity.industry)}`}
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-ocean-500 to-cyan-500 hover:from-ocean-400 hover:to-cyan-400 text-ocean-950 font-bold text-sm flex items-center justify-center gap-2 shadow-glow-cyan transition-all hover:scale-[1.02]"
               >
-                <span>Launch Full-Screen Business Map →</span>
+                <span>Initiate Statutory Docket</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
           </div>
-
         </div>
-
-      </div>
+      )}
     </section>
   );
 };

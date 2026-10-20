@@ -4,14 +4,9 @@
 
 @layer base {
   body {
-    background-color: #F4FAFC;
-    color: #06212B;
+    background-color: #041B23;
+    color: #F1F5F9;
     font-family: "Hanken Grotesk", "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-image: 
-      radial-gradient(circle at 50% -10%, rgba(126, 203, 224, 0.22) 0%, transparent 55%),
-      radial-gradient(circle at 90% 40%, rgba(56, 172, 204, 0.1) 0%, transparent 40%),
-      radial-gradient(circle at 10% 80%, rgba(14, 139, 178, 0.08) 0%, transparent 40%);
-    background-attachment: fixed;
   }
 
   h1, h2, h3, .font-editorial {
@@ -239,6 +234,215 @@
     background-color: #F0F9FB;
     border-color: #7ECBE0;
     box-shadow: 0 1px 3px rgba(14, 139, 178, 0.12);
+  }
+
+  /* Atmospheric Background Ambient Keyframes */
+  @keyframes slow-ambient-drift-1 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.75;
+    }
+    50% {
+      transform: translate(4%, -6%) scale(1.08);
+      opacity: 0.95;
+    }
+  }
+
+  @keyframes slow-ambient-drift-2 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(-5%, 5%) scale(1.12);
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes slow-ambient-drift-3 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translate(6%, 4%) scale(1.1);
+      opacity: 0.65;
+    }
+  }
+
+  @keyframes pathway-beam-pulse {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+
+  .animate-ambient-1 {
+    animation: slow-ambient-drift-1 18s ease-in-out infinite alternate;
+  }
+
+  .animate-ambient-2 {
+    animation: slow-ambient-drift-2 24s ease-in-out infinite alternate;
+  }
+
+  .animate-ambient-3 {
+    animation: slow-ambient-drift-3 20s ease-in-out infinite alternate;
+  }
+
+  .animate-pathway-beam {
+    animation: pathway-beam-pulse 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  /* Infinite Staggered Floating Cards Keyframes */
+  @keyframes float-track-up {
+    0% {
+      transform: translateY(0%);
+    }
+    100% {
+      transform: translateY(-50%);
+    }
+  }
+
+  @keyframes float-track-down {
+    0% {
+      transform: translateY(-50%);
+    }
+    100% {
+      transform: translateY(0%);
+    }
+  }
+
+  .floating-track-up-fast {
+    animation: float-track-up 28s linear infinite;
+  }
+
+  .floating-track-up-slow {
+    animation: float-track-up 36s linear infinite;
+  }
+
+  .floating-track-down-fast {
+    animation: float-track-down 32s linear infinite;
+  }
+
+  .floating-track-down-slow {
+    animation: float-track-down 40s linear infinite;
+  }
+
+  .floating-track:hover {
+    animation-play-state: paused;
+  }
+
+  /* Shimmering Dynamic Color Gradient Flow & Beacon Halo */
+  @keyframes gradient-flow {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes beacon-halo {
+    0% {
+      transform: scale(0.96);
+      opacity: 0.85;
+    }
+    50% {
+      transform: scale(1.18);
+      opacity: 0.15;
+    }
+    100% {
+      transform: scale(0.96);
+      opacity: 0.85;
+    }
+  }
+
+  .animate-gradient-flow {
+    background-size: 250% 250%;
+    animation: gradient-flow 3.5s ease infinite;
+  }
+
+  .animate-beacon-halo {
+    animation: beacon-halo 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Minimalist Classy Glass Sheen Sweep */
+  @keyframes sheen-sweep {
+    0% {
+      transform: translateX(-120%) skewX(-20deg);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.75;
+    }
+    35% {
+      transform: translateX(220%) skewX(-20deg);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(220%) skewX(-20deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-sheen-sweep {
+    animation: sheen-sweep 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  /* Subtle floating drift for compact FAQ cards (2-3px) */
+  @keyframes subtle-float-1 {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+
+  @keyframes subtle-float-2 {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+
+  .animate-subtle-float-1 {
+    animation: subtle-float-1 5s ease-in-out infinite;
+  }
+
+  .animate-subtle-float-2 {
+    animation: subtle-float-2 6s ease-in-out infinite;
+  }
+
+  /* Smooth upward transition motion */
+  @keyframes slide-up-smooth {
+    0% {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up-smooth 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
 

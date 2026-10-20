@@ -180,15 +180,9 @@ function LayoutInner(): JSX.Element {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="tactile-btn mustard-btn-secondary px-3.5 py-1.5 text-xs"
+                  className="tactile-btn mustard-btn-primary px-3.5 py-1.5 text-xs font-bold"
                 >
                   {t('nav.login')}
-                </Link>
-                <Link
-                  to="/register"
-                  className="tactile-btn mustard-btn-primary px-3.5 py-1.5 text-xs"
-                >
-                  {t('nav.register')}
                 </Link>
               </div>
             )}
