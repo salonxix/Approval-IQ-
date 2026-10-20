@@ -3,19 +3,18 @@
  */
 
 const DONE_PHRASES = new Set([
-  'yes', 'yeah', 'done', 'bye', 'goodbye', 'stop', 'end', 'exit', 'quit', 'close',
-  'thank you', 'thanks', 'all set', "i'm done", 'im done', 'nothing else',
-  "that's all", "that's it", "i'm good", 'all good', 'no thanks', 'no thank you',
+  'bye', 'goodbye', 'stop listening', 'end session', 'exit', 'quit', 'close assistant',
+  'turn off', 'stop approve', 'good bye', "that's all", "that's it",
 ]);
 
 /**
- * Normalizes user speech transcript and detects conversational session-end intent.
+ * Normalizes user speech transcript and detects explicit conversational session-end intent.
+ * Does NOT terminate on affirmative words like "yes", "yeah", "ok", or gratitude phrases.
  */
 export function isDone(text: string): boolean {
   const normalized = text.toLowerCase().trim().replace(/[.,!?;:]+$/, '');
   if (DONE_PHRASES.has(normalized)) return true;
-  // Prefixed variants: "ok thank you", "alright bye", "great thanks", "that is all"
-  return /\b(thank\s*you|thanks|bye|goodbye|that'?s?\s*(all|it)|all\s*(good|set)|i'?m?\s*(done|good))\b/i.test(normalized);
+  return /\b(goodbye|bye bye|stop listening|close assistant|end session|turn off voice|quit assistant)\b/i.test(normalized);
 }
 
 /**
@@ -85,6 +84,7 @@ export function pickFemaleVoice(): SpeechSynthesisVoice | null {
 
 /**
  * Detects if a captured STT transcript is merely an acoustic feedback echo of the assistant's own voice.
+ * Never drops short queries (< 4 words) or queries spoken after the 800ms buffer.
  */
 export function isSelfSpeechEcho(
   userTranscript: string,
@@ -92,6 +92,11 @@ export function isSelfSpeechEcho(
   timeSinceSpeechMs?: number
 ): boolean {
   if (!userTranscript || !lastAssistantText) return false;
+
+  // If more than 800ms has elapsed since assistant stopped speaking, it is definitively user speech
+  if (timeSinceSpeechMs != null && timeSinceSpeechMs > 800) {
+    return false;
+  }
 
   const normUser = userTranscript
     .toLowerCase()
@@ -107,41 +112,30 @@ export function isSelfSpeechEcho(
 
   if (!normUser || !normAssistant) return false;
 
-  // Common assistant closing / prompt phrases that often get picked up by microphone
+  // Never suppress short queries (< 4 words or < 18 chars) as echo.
+  // Real user queries are often short keywords: "approvals", "what documents", "show roadmap", "mpcb", "help".
+  const userWords = normUser.split(' ');
+  if (userWords.length < 4 || normUser.length < 18) {
+    return false;
+  }
+
+  // Exact phrase match of canned greeting phrases that got looped
   const commonEchoSnippets = [
-    'how can i help you today',
     'how do you want me to help you',
-    'hey im approve',
-    'im approve',
-    'im approve your voice assistant',
-    'your voice assistant',
-    'happy to help with your approvals',
-    'have a great day',
+    'hey im approve how do you want me to help you',
+    'happy to help with your approvals have a great day',
   ];
 
   for (const snippet of commonEchoSnippets) {
-    if (normUser === snippet || normUser.endsWith(snippet) || normUser.startsWith(snippet)) {
-      if (normAssistant.includes(snippet)) {
-        return true;
-      }
-    }
+    if (normUser === snippet) return true;
   }
 
-  // If the speech recognition triggered right after TTS stopped (< 3500ms)
-  if (timeSinceSpeechMs != null && timeSinceSpeechMs < 3500) {
-    // 1. Direct substring match inside the full assistant response
-    if (normAssistant.includes(normUser)) {
-      return true;
-    }
-
-    // 2. Direct match with the tail end (last 10 words) of the assistant's speech
-    const assistantWords = normAssistant.split(' ');
-    const tailWords = assistantWords.slice(-12).join(' ');
-    if (tailWords.includes(normUser) || normUser.includes(tailWords)) {
-      return true;
-    }
+  // Only consider echo if the user transcript is an exact substring of assistant's words and is at least 5 words long
+  if (userWords.length >= 5 && normAssistant.includes(normUser)) {
+    return true;
   }
 
   return false;
 }
+
 

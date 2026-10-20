@@ -129,6 +129,7 @@ export function VoiceProvider({ children }: VoiceProviderProps): JSX.Element {
   });
 
   const openOverlay = () => {
+    wakeWordRef.current?.pause();
     setIsOverlayOpen(true);
     if (voiceState === 'idle') {
       startControllerSession();
@@ -139,9 +140,11 @@ export function VoiceProvider({ children }: VoiceProviderProps): JSX.Element {
     setIsOverlayOpen(false);
     stopControllerSession();
     setVoiceTranscript('');
+    wakeWordRef.current?.resume();
   };
 
   const startSession = async () => {
+    wakeWordRef.current?.pause();
     setIsOverlayOpen(true);
     setVoiceError(null);
     await startControllerSession();

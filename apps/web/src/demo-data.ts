@@ -402,8 +402,247 @@ function synthesizeStatutoryAnswer(
   const jurisdiction = getStateJurisdiction(project.state);
   const q = message.toLowerCase();
 
-  // 1. Navigation Commands
-  if (/take me to|open|go to|show me|navigate to/.test(q)) {
+  // 0. Conversational Greeting & System Capabilities
+  if (/^(hi|hello|hey|help|greetings|good (morning|afternoon|evening)|can you help|how can you help|who are you|what can you do)\b/i.test(q)) {
+    return {
+      reply: [
+        `### 👋 Hello! I'm Approve, your Statutory Compliance Copilot.`,
+        '',
+        `For **${project.name}** in ${project.district}, ${project.state}, I provide live, grounded regulatory intelligence across your clearances, documents, and subsidies:`,
+        '',
+        `- 📜 **Clearances & Roadmaps**: Ask *"What approvals do I need?"* or *"What is the critical path?"* to list your statutory permits, dependencies, and RTS SLAs.`,
+        `- 📁 **Document Vault**: Ask *"What documents do I need?"* or *"Which documents are missing?"* to audit verified and missing paperwork.`,
+        `- ⏱️ **Timeline & Prediction**: Ask *"How long will it take?"* to inspect the parallel clearance critical path.`,
+        `- 💰 **Fiscal Subsidies**: Ask *"What schemes am I eligible for?"* for ₹5.00 Cr CGTMSE guarantees, EPCG 0% customs duty, and tax holidays.`,
+        `- 🚨 **Immediate Next Steps**: Ask *"What is pending on my dashboard?"* to unblock today's filings.`,
+      ].join('\n'),
+      spokenText: `Hello! I'm Approve, your statutory compliance copilot. For your ${project.name}, I can list your required approvals, review missing documents in your vault, explain government schemes, or guide your immediate filings. What would you like to explore?`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'roadmap', label: 'View Roadmap' },
+        { type: 'navigate', target: 'vault', label: 'Check Vault' },
+        { type: 'navigate', target: 'schemes', label: 'Explore Schemes' },
+      ],
+    };
+  }
+
+  // 1. Comprehensive Approvals & Clearances Listing (The Primary Listing Intent)
+  if (/\b(what.*(approval|clearance|licen[sc]e|permit)|list.*(approval|clearance|licen[sc]e|permit)|all.*(approval|clearance|licen[sc]e|permit)|which.*(approval|clearance|licen[sc]e|permit)|how many.*(approval|clearance|licen[sc]e|permit)|my approvals|statutory approvals|required approvals|clearance list|show.*(approval|clearance|licen[sc]e|permit))\b/i.test(q)) {
+    const readyNodes = dataset.roadmap.nodes.filter(n => n.status === 'available');
+    const inReviewNodes = dataset.roadmap.nodes.filter(n => n.status === 'in_progress');
+    const blockedNodes = dataset.roadmap.nodes.filter(n => n.status === 'blocked');
+
+    return {
+      reply: [
+        `### 📜 Required Statutory Clearances for ${project.name}`,
+        `**Facility Profile**: ${project.areaSqft || 25000} sq.ft. | ${project.district}, ${project.state} | ${dataset.cpcbCategory} Category | **Total Clearances**: ${dataset.roadmap.nodes.length}`,
+        '',
+        `#### 🟢 Ready for Immediate Submission (${readyNodes.length})`,
+        ...(readyNodes.length > 0
+          ? readyNodes.map((n, i) => `  ${i + 1}. **${n.approvalName}**\n     - **Authority**: ${n.authority?.name || jurisdiction.spcbName}\n     - **Binding RTS SLA**: ${n.slaDays || 30} working days\n     - **Action**: Immediate single-window filing on ${jurisdiction.singleWindowPortal}`)
+          : ['  - No clearances currently in ready state.']),
+        '',
+        ...(inReviewNodes.length > 0 ? [
+          `#### 🟡 Currently In Scrutiny & Review (${inReviewNodes.length})`,
+          ...inReviewNodes.map((n, i) => `  ${i + 1}. **${n.approvalName}** (${n.authority?.name || 'Departmental Desk'}, under official verification)`),
+          '',
+        ] : []),
+        `#### 🔴 Gated & Blocked by Prerequisites (${blockedNodes.length})`,
+        ...(blockedNodes.length > 0
+          ? blockedNodes.map((n, i) => `  ${i + 1}. **${n.approvalName}** (${n.authority?.name || 'Regulator'})\n     - *Prerequisite*: Blocked by preceding approvals and physical site completion milestones.`)
+          : ['  - No downstream clearances blocked.']),
+        '',
+        `💡 *Statutory SLA Protection*: All applications filed through **${jurisdiction.singleWindowPortal}** are legally enforceable under the **${jurisdiction.rtsActName}** with automatic deemed approval if unreviewed within the statutory SLA.`,
+      ].join('\n'),
+      spokenText: `Your ${project.name} requires ${dataset.roadmap.nodes.length} statutory clearances. Right now, ${readyNodes.length} are ready for immediate submission on ${jurisdiction.singleWindowPortal}, including MPCB Consent to Establish, DISH Plan Approval, and Provisional Fire NOC. ${blockedNodes.length} operational permits are currently gated waiting for plant construction.`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'roadmap', label: 'Open Approval Roadmap' },
+        { type: 'navigate', target: 'profile', label: 'View Profile' },
+      ],
+    };
+  }
+
+  // 2. Comprehensive Required & Missing Documents Listing
+  if (/\b(what.*document|list.*document|which.*document|missing.*document|required.*document|document.*checklist|documents.*vault|paperwork|missing paperwork|show.*document)\b/i.test(q)) {
+    const verifiedDocs = dataset.documents.filter(d => d.currentVersion?.state === 'verified');
+    const pendingDocs = dataset.documents.filter(d => d.currentVersion?.state !== 'verified');
+    const getDocLabel = (d: Document) => d.currentVersion?.originalFilename || d.documentDefinitionCode || `Statutory Filing Doc #${d.id.slice(0, 6)}`;
+    const missingItems = dataset.quickOverview?.documents?.missingList?.length
+      ? dataset.quickOverview.documents.missingList
+      : [
+          'Chartered Structural Stability Certificate (Form 1A)',
+          'CA Gross Plant & Machinery Valuation Certificate',
+          'Water Balance & Effluent Disposal Flow Plan',
+        ];
+
+    return {
+      reply: [
+        `### 📁 Statutory Document Checklist & Vault Status`,
+        `**Project Docket**: ${project.name} (${project.district}, ${project.state})`,
+        '',
+        `#### ✅ Verified & Accepted in Vault (${verifiedDocs.length})`,
+        ...(verifiedDocs.length > 0
+          ? verifiedDocs.map((d, i) => `  ${i + 1}. **${getDocLabel(d)}** (Verified on file)`)
+          : ['  - Initial documents undergoing verification.']),
+        '',
+        `#### ⚠️ Pending Upload or Missing Documents (${missingItems.length})`,
+        ...missingItems.map((m, i) => `  ${i + 1}. **${m}** (Required for single-window verification)`),
+        ...(pendingDocs.length > 0 ? pendingDocs.map((d) => `  - **${getDocLabel(d)}** (Upload in progress)`) : []),
+        '',
+        '#### 📋 General Mandatory Statutory Document Checklist for Single Window:',
+        '  1. **Registered Lease Deed / MIDC Allotment Letter** (Plot boundaries & tenure)',
+        '  2. **Chartered Architect Factory Layout & Machine Layout Drawing** (DISH Rule 3)',
+        '  3. **Detailed Project Report (DPR)** with process flow diagram and raw material mass balance',
+        '  4. **Effluent Treatment Plant (ETP) P&ID Drawing** and hydraulic sizing calculations',
+        '  5. **Chartered Structural Engineer Stability Certificate** (Form 1A)',
+        '  6. **Water & Power Computation Dossier** for MSEDCL / MIDC connections',
+        '  7. **CA Capital Investment Certificate** for gross plant & machinery valuation',
+        '  8. **Company Incorporation, MOA/AOA, and Authorized Signatory KYC (PAN/Aadhaar)**',
+      ].join('\n'),
+      spokenText: `You need eight primary statutory documents for your clearances. In your Document Vault, ${verifiedDocs.length} documents are already verified, including your registered lease deed and factory layouts. You still need to submit ${pendingDocs.length} items, including your structural stability certificate and CA capital investment certificate.`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'vault', label: 'Open Document Vault' },
+        { type: 'navigate', target: 'roadmap', label: 'View Prerequisite Docs' },
+      ],
+    };
+  }
+
+  // 3. Clearance Timeline & Completion Duration
+  if (/\b(how long|timeline|duration|how many days|when can i (start|launch|produce|open|operate)|completion time|time to approve|time required|lead time)\b/i.test(q)) {
+    return {
+      reply: [
+        `### ⏱️ Statutory Clearance Timeline & Legal Duration`,
+        '',
+        `- **ApprovalIQ Parallel DAG Trajectory**: **85 to 110 working days** from initial single-window submission to full statutory clearance.`,
+        `- **Traditional Sequential Process**: **240+ working days** (ApprovalIQ eliminates ~130 days by executing independent tracks concurrently).`,
+        '',
+        `#### 📊 Phased Milestone Schedule:`,
+        `1. **Phase 1: Pre-Construction Clearances (Days 1–45)**:`,
+        `   - Provisional Fire NOC (15 Days SLA)`,
+        `   - DISH Factory Building Plan Approval (30 Days SLA)`,
+        `   - MPCB Consent to Establish — CTE (45 Days SLA)`,
+        `   - Industrial Power & Water Connection Sanctions (15 Days SLA)`,
+        `2. **Phase 2: Plant Erection & ETP Civil Works (Days 45–80)**:`,
+        `   - Construction, machinery placement, and biological ETP erection.`,
+        `3. **Phase 3: Pre-Commissioning Inspections & Operating Licenses (Days 80–110)**:`,
+        `   - Joint MPCB & Fire Site Inspection (7 Days)`,
+        `   - Final Fire NOC (15 Days SLA)`,
+        `   - MPCB Consent to Operate — CTO (30 Days SLA)`,
+        `   - DISH Operational Factory License (30 Days SLA)`,
+        `   - State Excise Commercial Brewery Licence BRL-001 (60 Days SLA)`,
+        `   - FSSAI Central Alcohol License (30 Days SLA)`,
+        '',
+        `⚖️ *RTS Legal Guarantee*: Under the **${jurisdiction.rtsActName}**, every clearance has a binding statutory SLA. Applications exceeding the SLA trigger Section 9 Deemed Approval.`,
+      ].join('\n'),
+      spokenText: `With ApprovalIQ's parallel critical path, your regulatory clearance timeline is projected at 85 to 110 working days, compared to over 240 days with traditional sequential filings. All clearances are protected by binding Maharashtra Right to Services SLAs.`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'time-cost', label: 'Open Time & Cost Forecast' },
+        { type: 'navigate', target: 'roadmap', label: 'Inspect Critical Path' },
+      ],
+    };
+  }
+
+  // 4. Critical Path & Bottlenecks
+  if (/\b(critical path|longest path|gating sequence|bottleneck sequence|primary bottleneck)\b/i.test(q)) {
+    return {
+      reply: [
+        `### 🔗 Statutory Critical Path Analysis for ${project.name}`,
+        '',
+        `The **Critical Path** represents the longest unbroken sequence of dependent regulatory clearances that dictates your overall launch date:`,
+        '',
+        `1. **Plot Lease Execution & Possession** (Day 0) — *Hard prerequisite for all filings*`,
+        `   ↓`,
+        `2. **Provisional Fire NOC + DISH Plan Approval** (Days 1–30) — *Required for MPCB CTE*`,
+        `   ↓`,
+        `3. **MPCB Consent to Establish (CTE)** (Days 1–45) — *Required to begin physical construction*`,
+        `   ↓`,
+        `4. **Physical Plant Erection & ETP Commissioning** (Days 45–80) — *Site milestone*`,
+        `   ↓`,
+        `5. **Final Fire NOC + MPCB Consent to Operate (CTO)** (Days 80–110) — *Mandatory for Excise*`,
+        `   ↓`,
+        `6. **State Excise Brewery Licence (BRL-001) & FSSAI Central License** (Days 80–110)`,
+        `   ↓`,
+        `🏁 **Commercial Batch Production Authorized**`,
+        '',
+        `💡 *Optimization Strategy*: By running MPCB CTE, DISH Plan, and Fire NOC concurrently in Phase 1, you unblock physical construction 75 days faster.`,
+      ].join('\n'),
+      spokenText: `Your critical path runs from Plot Lease, to Provisional Fire NOC and MPCB Consent to Establish, then factory construction and ETP erection, and finally your Consent to Operate and State Excise Brewery Licence.`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'roadmap', label: 'View DAG Roadmap' },
+        { type: 'navigate', target: 'time-cost', label: 'View Timeline Forecast' },
+      ],
+    };
+  }
+
+  // 5. All Eligible Fiscal Schemes & Subsidies
+  if (/\b(what.*scheme|eligible.*scheme|which.*scheme|what.*subsid|list.*scheme|government subsid|all schemes|financial incentive|fiscal benefit|financial support|show.*scheme)\b/i.test(q)) {
+    return {
+      reply: [
+        `### 💰 Eligible Government Schemes & Fiscal Incentives for ${project.name}`,
+        `**Facility CapEx**: ${project.investmentFormatted || '₹4.00 Crore'} | **Location**: ${project.district}, ${project.state} (MIDC Chakan)`,
+        '',
+        `#### 1. Central CGTMSE Collateral-Free Credit Guarantee (MSME / SIDBI)`,
+        `- **Maximum Guarantee**: Up to **₹5.00 Crore** term loan and working capital.`,
+        `- **Sovereign Cover**: **85% guarantee** provided to your lending bank without mortgaging personal residential property.`,
+        `- **Interest Benefit**: 1.0% to 1.5% interest rate discount under Priority Sector Lending.`,
+        '',
+        `#### 2. EPCG 0% Customs Duty Machinery Import (DGFT)`,
+        `- **Customs Benefit**: Import high-precision automated brewing kettles, fermenters, and canning lines at **0% basic customs duty** (saving 27.5% tariff).`,
+        `- **Export Obligation**: Commit to export 6x duty saved over a 6-year period.`,
+        '',
+        `#### 3. Section 80-IAC 3-Year 100% Corporate Income Tax Holiday (DPIIT)`,
+        `- **Tax Relief**: **100% tax deduction** on corporate profits for 3 consecutive financial years.`,
+        `- **Eligibility**: Available to DPIIT-recognized startups under 10 years old with turnover < ₹100 Cr.`,
+        '',
+        `#### 4. MSME ZED (Zero Defect Zero Effect) Green Manufacturing Subsidy`,
+        `- **Financial Relief**: Up to **80% subsidy** on environmental audits, water conservation assessments, and cleaner technology certification.`,
+        `- **Banking Bonus**: Additional 0.5% interest rate rebate on bank credit lines.`,
+        '',
+        `#### 5. Maharashtra Industrial Policy Power Concessions`,
+        `- **Tariff Benefit**: Electricity duty exemption for 5 to 7 years on registered MSME manufacturing load.`,
+        '',
+        `⚠️ **State SGST Cash Grants Notice**: Under **Maharashtra PSI 2019 (Annexure II Negative List)**, potable alcohol and brewery units are excluded from direct SGST cash refunds and state capital grants. However, all Central guarantees, customs waivers, and corporate tax holidays remain 100% active.`,
+      ].join('\n'),
+      spokenText: `For your Pune Craft Brewery, you are eligible for up to ₹5.00 Crore in collateral-free bank loans under CGTMSE, zero percent customs duty on imported machinery under EPCG, a three-year corporate income tax holiday under Section 80-IAC, and state electricity duty exemptions.`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'schemes', label: 'Open Schemes Desk' },
+        { type: 'navigate', target: 'roadmap', label: 'View Roadmap' },
+      ],
+    };
+  }
+
+  // 6. Regulatory Authorities & Governing Bodies
+  if (/\b(regulatory authorit|which department|government bodies|competent authorit|who approve|who issue|who governs)\b/i.test(q)) {
+    return {
+      reply: [
+        `### 🏛️ Competent Regulatory Authorities for ${project.name}`,
+        '',
+        `1. **Maharashtra Pollution Control Board (MPCB)**: Issues Consent to Establish (CTE) and Consent to Operate (CTO) for industrial environmental compliance (Orange Category).`,
+        `2. **Directorate of Industrial Safety & Health (DISH)**: Approves Factory Building Plans (Rule 3) and issues the Operational Factory License (Sections 6 & 7).`,
+        `3. **Maharashtra State Fire Services (MIDC Fire Department)**: Grants Provisional Fire NOC for construction and Final Fire NOC after physical on-site fire system verification.`,
+        `4. **State Excise Department, Maharashtra**: Authorizes brewery establishment, issues Form BRL-001 Commercial Brewery Licence, and registers brands and holograms.`,
+        `5. **Maharashtra State Electricity Distribution Co. (MSEDCL)**: Grants industrial HT/LT power load sanctions and meter installation.`,
+        `6. **Maharashtra Industrial Development Corporation (MIDC)**: Governs industrial plot lease execution and piped water supply connections.`,
+        `7. **Food Safety & Standards Authority of India (FSSAI)**: Issues Central FSSAI License for alcoholic beverage manufacturing and labeling compliance.`,
+        `8. **Department of Legal Metrology**: Registers packaged commodities (LMPC Rule 27) for retail bottle/can volume declarations.`,
+        '',
+        `🌐 *Single Window Integration*: All applications are unified under **MAITRI single-window portal** protected by the **Maharashtra Right to Services (RTS) Act 2015**.`,
+      ].join('\n'),
+      spokenText: `Your approvals are governed by MPCB for environmental clearance, DISH for factory safety, MIDC Fire Services, the State Excise Department for brewery licensing, MSEDCL for power, MIDC for water, and FSSAI for food safety. All applications are synchronized through the MAITRI portal.`,
+      mode: 'offline',
+      actions: [
+        { type: 'navigate', target: 'roadmap', label: 'Open Clearance Graph' },
+      ],
+    };
+  }
+
+  // 7. Navigation Commands
+  if (/take me to|open|go to|navigate to/.test(q)) {
     if (/scheme|incentive|subsidy|subsidies|grant|funding/.test(q)) {
       return {
         reply: 'Opening Schemes and Incentives desk now.',

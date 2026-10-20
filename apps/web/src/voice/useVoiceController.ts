@@ -276,17 +276,27 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
       // Automatically loop back to listening for follow-up questions
       startListening();
     } catch {
-      const errMsg = "I'm Approve. You can ask me about your approval roadmap, required licenses, government schemes, or navigate across the dashboard.";
+      let fallbackAnswer: { reply: string; spokenText?: string; actions?: VoiceAction[] } | null = null;
+      try {
+        fallbackAnswer = await generateApproveClientAnswer(text, projectIdRef.current);
+      } catch {
+        fallbackAnswer = null;
+      }
+
+      const reply = fallbackAnswer?.reply || "For your Pune Craft Brewery project, you can ask me to list your required approvals, check missing documents in the vault, or explore eligible government subsidies like CGTMSE and EPCG.";
+      const spoken = fallbackAnswer?.spokenText || reply;
+
       const assistantMsg: VoiceMessage = {
         id: crypto.randomUUID?.() || String(Date.now()),
         role: 'assistant',
-        text: errMsg,
-        spokenText: errMsg,
+        text: reply,
+        spokenText: spoken,
         timestamp: new Date().toISOString(),
+        actions: fallbackAnswer?.actions as VoiceAction[] | undefined,
       };
       cbAnswer.current?.(assistantMsg);
       setVoiceState('speaking');
-      await speak(errMsg);
+      await speak(spoken);
       if (!activeRef.current) return;
       await new Promise((r) => setTimeout(r, 450));
       if (!activeRef.current) return;
@@ -333,9 +343,10 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
     setVoiceState('listening');
     const rec = new Ctor();
 
-    rec.continuous = false; // Discrete per-utterance cycle for instant commit on speech end
+    rec.continuous = false; // Discrete per-utterance cycle for reliable end-of-speech commit
     rec.interimResults = true;
-    rec.lang = 'en-US';
+    const browserLang = (typeof navigator !== 'undefined' && navigator.language) || 'en-IN';
+    rec.lang = browserLang.startsWith('en') ? browserLang : 'en-IN';
     rec.maxAlternatives = 1;
     recRef.current = rec;
 
@@ -364,7 +375,7 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
     };
 
     rec.onerror = (event) => {
-      if (event.error === 'aborted' || event.error === 'no-speech') return;
+      if (event.error === 'aborted') return;
       if (event.error === 'not-allowed') {
         emitError({ code: 'MIC_DENIED', message: 'Microphone permission was denied. Please allow microphone access in your browser settings.' });
         stopRecognition();
@@ -372,9 +383,7 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
         activeRef.current = false;
         return;
       }
-      if (activeRef.current) {
-        setTimeout(() => startListening(), 250);
-      }
+      // On 'no-speech' or audio errors, onend will fire and restart cleanly
     };
 
     rec.onend = () => {
@@ -390,19 +399,18 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
         if (isSelfSpeechEcho(toProcess, lastSpokenAssistantTextRef.current, timeSinceSpeech)) {
           console.warn('[VoiceController] Acoustic echo detected and suppressed:', toProcess);
           if (activeRef.current) {
-            setTimeout(() => startListening(), 200);
+            timerRef.current = setTimeout(() => startListening(), 250);
           }
           return;
         }
 
-        // Duplicate loop suppression (repeated identical utterance within 4 seconds)
+        // Duplicate loop suppression (repeated identical utterance within 3 seconds)
         if (
           toProcess.toLowerCase() === lastProcessedUserTextRef.current.toLowerCase() &&
-          Date.now() - lastProcessedUserTimeRef.current < 4000
+          Date.now() - lastProcessedUserTimeRef.current < 3000
         ) {
-          console.warn('[VoiceController] Duplicate loop utterance suppressed:', toProcess);
           if (activeRef.current) {
-            setTimeout(() => startListening(), 200);
+            timerRef.current = setTimeout(() => startListening(), 250);
           }
           return;
         }
@@ -410,8 +418,13 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
         lastProcessedUserTextRef.current = toProcess;
         lastProcessedUserTimeRef.current = Date.now();
         processTranscript(toProcess);
-      } else if (stateRef.current === 'listening') {
-        setTimeout(() => startListening(), 100);
+      } else if (stateRef.current === 'listening' && activeRef.current) {
+        // Clean restart after silence / no-speech
+        timerRef.current = setTimeout(() => {
+          if (activeRef.current && stateRef.current === 'listening') {
+            startListening();
+          }
+        }, 250);
       }
     };
 
@@ -419,7 +432,7 @@ export function useVoiceController(options: VoiceControllerOptions = {}) {
       rec.start();
     } catch {
       if (activeRef.current) {
-        setTimeout(() => startListening(), 300);
+        timerRef.current = setTimeout(() => startListening(), 350);
       }
     }
   }, [emitError, processTranscript, setVoiceState, stopRecognition]);
